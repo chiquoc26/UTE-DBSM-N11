@@ -154,12 +154,12 @@
             containerId: 'routePagination',
             defaultPageSize: 5,
             pageSizeOptions: [5, 10, 20],
-            onChange: () => renderRoutes()
+            onChange: (page, size) => loadRoutes(page, size)
         });
 
         async function initPage() {
             await loadWarehouses();
-            await loadRoutes();
+            await loadRoutes(1, routePagination.pageSize);
         }
 
         async function loadWarehouses() {
@@ -196,17 +196,25 @@
             toSelect.innerHTML = options;
         }
 
-        async function loadRoutes() {
+        let currentSearchQuery = '';
+
+        async function loadRoutes(page = routePagination.currentPage, size = routePagination.pageSize) {
             const tbody = document.getElementById('routeTableBody');
             try {
-                const res = await UteApi.getRoutes();
-                if (res && res.success && Array.isArray(res.data)) {
-                    allRoutes = res.data;
-                    currentRoutesFiltered = allRoutes;
-                    routePagination.reset();
-                    renderRoutes();
+                const res = await UteApi.getRoutes(page, size, currentSearchQuery);
+                if (res && res.success && res.data) {
+                    if (res.data.items) {
+                        // Nhận kết quả phân trang trực tiếp từ Server-side PageResponse
+                        renderRouteList(res.data.items);
+                        routePagination.setServerPageInfo(res.data);
+                    } else if (Array.isArray(res.data)) {
+                        // Fallback client-side
+                        allRoutes = res.data;
+                        currentRoutesFiltered = allRoutes;
+                        const paged = routePagination.paginate(currentRoutesFiltered);
+                        renderRouteList(paged);
+                    }
                 } else {
-                    currentRoutesFiltered = [];
                     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có tuyến vận chuyển nào.</td></tr>`;
                     document.getElementById('routePagination').innerHTML = '';
                 }
@@ -221,17 +229,14 @@
             }
         }
 
-        function renderRoutes() {
+        function renderRouteList(routes) {
             const tbody = document.getElementById('routeTableBody');
-            if (!currentRoutesFiltered || currentRoutesFiltered.length === 0) {
+            if (!routes || routes.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Không tìm thấy tuyến phù hợp.</td></tr>`;
-                document.getElementById('routePagination').innerHTML = '';
                 return;
             }
 
-            const paged = routePagination.paginate(currentRoutesFiltered);
-
-            tbody.innerHTML = paged.map(r => {
+            tbody.innerHTML = routes.map(r => {
                 const tenDi = warehouseMap[r.maKhoDi] || r.maKhoDi;
                 const tenDen = warehouseMap[r.maKhoDen] || r.maKhoDen;
                 const dist = r.khoangCach != null ? `${r.khoangCach} km` : '---';
@@ -254,21 +259,9 @@
         }
 
         function filterRoutes(query) {
-            if (!query) {
-                currentRoutesFiltered = allRoutes;
-            } else {
-                const q = query.toLowerCase().trim();
-                currentRoutesFiltered = allRoutes.filter(r => {
-                    const tenDi = (warehouseMap[r.maKhoDi] || '').toLowerCase();
-                    const tenDen = (warehouseMap[r.maKhoDen] || '').toLowerCase();
-                    return (r.maTuyen && r.maTuyen.toLowerCase().includes(q)) ||
-                           (r.maKhoDi && r.maKhoDi.toLowerCase().includes(q)) ||
-                           (r.maKhoDen && r.maKhoDen.toLowerCase().includes(q)) ||
-                           tenDi.includes(q) || tenDen.includes(q);
-                });
-            }
+            currentSearchQuery = query ? query.trim() : '';
             routePagination.reset();
-            renderRoutes();
+            loadRoutes(1, routePagination.pageSize);
         }
 
         function openCreateModal() {

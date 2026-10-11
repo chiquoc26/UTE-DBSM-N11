@@ -136,7 +136,7 @@
             containerId: 'tripPkgsPagination',
             defaultPageSize: 5,
             pageSizeOptions: [5, 10, 20],
-            onChange: () => renderPackagesTable()
+            onChange: (page, size) => loadTripPackages(currentTripId, page, size)
         });
 
         async function initPage() {
@@ -194,26 +194,93 @@
             document.getElementById('navDeliveryUpdate').href = `17-delivery-update.html?id=${tripId}`;
 
             try {
-                // Tải chi tiết chuyến và danh sách kiện
-                const [tripRes, pkgsRes] = await Promise.all([
-                    UteApi.getDriverTripDetail(tripId),
-                    UteApi.getDriverTripPackagesFull(tripId)
-                ]);
-
+                // Tải chi tiết chuyến
+                const tripRes = await UteApi.getDriverTripDetail(tripId);
                 if (tripRes && tripRes.success && tripRes.data) {
                     currentTripData = tripRes.data;
                     renderTripOverview(currentTripData);
                 }
 
-                if (pkgsRes && pkgsRes.success) {
-                    currentTripPkgsList = pkgsRes.data || [];
-                    tripPkgsPagination.reset();
-                    renderPackagesTable();
-                }
+                // Tải danh sách kiện có phân trang
+                tripPkgsPagination.reset();
+                await loadTripPackages(tripId, 1, tripPkgsPagination.pageSize);
             } catch (err) {
                 console.error('Lỗi load chi tiết chuyến:', err);
                 showToast('Lỗi', 'Không thể tải chi tiết chuyến: ' + err.message, 'danger');
             }
+        }
+
+        async function loadTripPackages(tripId, page = tripPkgsPagination.currentPage, size = tripPkgsPagination.pageSize) {
+            const tbody = document.getElementById('tripPkgsBody');
+            try {
+                const pkgsRes = await UteApi.getDriverTripPackagesFull(tripId, page, size);
+                if (pkgsRes && pkgsRes.success && pkgsRes.data) {
+                    if (pkgsRes.data.items) {
+                        currentTripPkgsList = pkgsRes.data.items;
+                        document.getElementById('pkgTableTitle').innerText = `Danh sách kiện hàng gán trên chuyến (${pkgsRes.data.totalItems || currentTripPkgsList.length} kiện)`;
+                        renderPackagesList(currentTripPkgsList);
+                        tripPkgsPagination.setServerPageInfo(pkgsRes.data);
+                    } else if (Array.isArray(pkgsRes.data)) {
+                        currentTripPkgsList = pkgsRes.data;
+                        document.getElementById('pkgTableTitle').innerText = `Danh sách kiện hàng gán trên chuyến (${currentTripPkgsList.length} kiện)`;
+                        const paged = tripPkgsPagination.paginate(currentTripPkgsList);
+                        renderPackagesList(paged);
+                    }
+                } else {
+                    currentTripPkgsList = [];
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Chuyến này chưa được gán kiện hàng nào.</td></tr>`;
+                    document.getElementById('tripPkgsPagination').innerHTML = '';
+                }
+            } catch (err) {
+                console.error('Lỗi tải kiện:', err);
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 24px;">Lỗi tải kiện: ${err.message}</td></tr>`;
+                document.getElementById('tripPkgsPagination').innerHTML = '';
+            }
+        }
+
+        function renderPackagesList(pkgs) {
+            const tbody = document.getElementById('tripPkgsBody');
+            if (!pkgs || pkgs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Chuyến này chưa được gán kiện hàng nào.</td></tr>`;
+                return;
+            }
+
+            const isLienKho = currentTripData && currentTripData.loaiChuyen === 'LIEN_KHO';
+
+            tbody.innerHTML = pkgs.map(p => {
+                const badge = getStatusBadge(p.trangThai);
+                const codFormatted = (p.cod || 0).toLocaleString('vi-VN') + ' đ';
+
+                let actionHtml = '';
+                if (isLienKho) {
+                    if (currentTripData.trangThai === 'Hoàn thành') {
+                        actionHtml = '<span class="badge badge-success">✓ Đã nhập kho đích</span>';
+                    } else if (currentTripData.trangThai === 'Đang đi') {
+                        actionHtml = '<span class="badge badge-info">🚚 Đang trung chuyển</span>';
+                    } else {
+                        actionHtml = '<span class="badge badge-warning">📦 Trên xe</span>';
+                    }
+                } else {
+                    actionHtml = p.trangThai === 'Đã giao'
+                        ? '<span style="font-size: 12px; color: var(--text-muted);">Đã hoàn tất</span>'
+                        : `<a href="17-delivery-update.html?id=${currentTripId}&pkg=${p.maKien}" class="btn btn-primary btn-sm">Cập nhật</a>`;
+                }
+
+                return `
+                    <tr>
+                        <td><strong style="color: var(--primary-blue);">${p.maKien}</strong></td>
+                        <td>${p.maDh || '---'}</td>
+                        <td>${p.khoiLuong || 0} kg</td>
+                        <td><strong>${p.tenNguoiNhan}</strong><br><small style="color: var(--text-muted);">${p.sdtNhan}</small></td>
+                        <td>${p.diaChiGiao}</td>
+                        <td style="font-weight: 600; color: ${p.cod > 0 ? 'var(--danger)' : 'var(--text-muted)'};">${codFormatted}</td>
+                        <td>${badge}</td>
+                        <td class="cell-actions">
+                            ${actionHtml}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderTripOverview(t) {

@@ -44,13 +44,48 @@ const UteApi = (function() {
 
         // 1. Dashboard
         getDispatcherDashboard: () => request('/api/dieu-phoi/dashboard'),
-        getPendingDispatches: () => request('/api/dieu-phoi/don-can-dieu-phoi'),
-        getRunningTrips: () => request('/api/dieu-phoi/chuyen-dang-chay'),
-        getAvailableDrivers: () => request('/api/dieu-phoi/tai-xe-kha-dung'),
-        getAvailableVehicles: () => request('/api/dieu-phoi/phuong-tien-kha-dung'),
+        getPendingDispatches: (options = {}) => {
+            if (typeof options !== 'object' || options === null) options = {};
+            const params = new URLSearchParams();
+            if (options.page) params.append('page', options.page);
+            if (options.size) params.append('size', options.size);
+            if (options.maKho) params.append('maKho', options.maKho);
+            if (options.loaiChuyen) params.append('loaiChuyen', options.loaiChuyen);
+            if (options.maTuyen) params.append('maTuyen', options.maTuyen);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/dieu-phoi/don-can-dieu-phoi${query}`);
+        },
+        getRunningTrips: (page, size) => {
+            const params = new URLSearchParams();
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/dieu-phoi/chuyen-dang-chay${query}`);
+        },
+        getAvailableDrivers: (page, size) => {
+            const params = new URLSearchParams();
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/dieu-phoi/tai-xe-kha-dung${query}`);
+        },
+        getAvailableVehicles: (page, size) => {
+            const params = new URLSearchParams();
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/dieu-phoi/phuong-tien-kha-dung${query}`);
+        },
 
         // 2. Tuyến vận chuyển
-        getRoutes: () => request('/api/dieu-phoi/tuyen'),
+        getRoutes: (page, size, search) => {
+            const params = new URLSearchParams();
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            if (search) params.append('search', search);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/dieu-phoi/tuyen${query}`);
+        },
         getRouteById: (maTuyen) => request(`/api/dieu-phoi/tuyen/${encodeURIComponent(maTuyen)}`),
         createRoute: (routeData) => request('/api/dieu-phoi/tuyen', {
             method: 'POST',
@@ -78,12 +113,29 @@ const UteApi = (function() {
         },
 
         // 4. Quản lý chuyến giao
-        getTrips: (maNvDieuPhoi) => {
-            const query = maNvDieuPhoi ? `?maNvDieuPhoi=${encodeURIComponent(maNvDieuPhoi)}` : '';
+        getTrips: (maNvDieuPhoi, page, size) => {
+            const params = new URLSearchParams();
+            if (maNvDieuPhoi) params.append('maNvDieuPhoi', maNvDieuPhoi);
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            const query = params.toString() ? `?${params.toString()}` : '';
             return request(`/api/dieu-phoi/chuyen-giao${query}`);
         },
-        getDetailedTrips: () => request('/api/dieu-phoi/chuyen-giao-chi-tiet'),
-        getTripPackages: (maChuyen) => request(`/api/dieu-phoi/chuyen-giao/${encodeURIComponent(maChuyen)}/chi-tiet`),
+        getDetailedTrips: (options = {}) => {
+            if (typeof options !== 'object' || options === null) options = {};
+            const params = new URLSearchParams();
+            if (options.page) params.append('page', options.page);
+            if (options.size) params.append('size', options.size);
+            if (options.trangThai) params.append('trangThai', options.trangThai);
+            if (options.search) params.append('search', options.search);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/dieu-phoi/chuyen-giao-chi-tiet${query}`);
+        },
+        getTripPackages: (maChuyen, page, size) => {
+            let url = `/api/dieu-phoi/chuyen-giao/${encodeURIComponent(maChuyen)}/chi-tiet`;
+            if (page && size) url += `?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}`;
+            return request(url);
+        },
         createTrip: (tripData) => request('/api/dieu-phoi/chuyen-giao', {
             method: 'POST',
             body: JSON.stringify(tripData)
@@ -118,18 +170,44 @@ const UteApi = (function() {
         },
 
         // 2. Chuyến giao của tài xế
-        getDriverTrips: (maTx, trangThai) => {
-            let url = `/api/tai-xe/chuyen-giao?maTx=${encodeURIComponent(maTx)}`;
-            if (trangThai) {
-                url += `&trangThai=${encodeURIComponent(trangThai)}`;
-            }
+        getDriverTrips: (maTx, trangThai, page, size) => {
+            const params = new URLSearchParams();
+            if (maTx) params.append('maTx', maTx);
+            if (trangThai) params.append('trangThai', trangThai);
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            return request(`/api/tai-xe/chuyen-giao?${params.toString()}`);
+        },
+        getDriverAssignedTrips: (maTx, page, size, trangThai) => {
+            const params = new URLSearchParams();
+            if (maTx) params.append('maTx', maTx);
+            if (trangThai) params.append('trangThai', trangThai);
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            return request(`/api/tai-xe/chuyen-phan-cong?${params.toString()}`);
+        },
+        getDriverPendingPackages: (maTx, page, size) => {
+            const params = new URLSearchParams();
+            if (maTx) params.append('maTx', maTx);
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/tai-xe/kien-can-giao${query}`);
+        },
+        getDriverDeliveredPackages: (maTx, page, size) => {
+            const params = new URLSearchParams();
+            if (maTx) params.append('maTx', maTx);
+            if (page) params.append('page', page);
+            if (size) params.append('size', size);
+            const query = params.toString() ? `?${params.toString()}` : '';
+            return request(`/api/tai-xe/kien-da-giao${query}`);
+        },
+        getDriverTripDetail: (maChuyen) => request(`/api/tai-xe/chuyen-giao/${encodeURIComponent(maChuyen)}/chi-tiet-day-du`),
+        getDriverTripPackagesFull: (maChuyen, page, size) => {
+            let url = `/api/tai-xe/chuyen-giao/${encodeURIComponent(maChuyen)}/kien-hang`;
+            if (page && size) url += `?page=${encodeURIComponent(page)}&size=${encodeURIComponent(size)}`;
             return request(url);
         },
-        getDriverAssignedTrips: (maTx) => request(`/api/tai-xe/chuyen-phan-cong?maTx=${encodeURIComponent(maTx)}`),
-        getDriverPendingPackages: (maTx) => request(`/api/tai-xe/kien-can-giao?maTx=${encodeURIComponent(maTx)}`),
-        getDriverDeliveredPackages: (maTx) => request(`/api/tai-xe/kien-da-giao?maTx=${encodeURIComponent(maTx)}`),
-        getDriverTripDetail: (maChuyen) => request(`/api/tai-xe/chuyen-giao/${encodeURIComponent(maChuyen)}/chi-tiet-day-du`),
-        getDriverTripPackagesFull: (maChuyen) => request(`/api/tai-xe/chuyen-giao/${encodeURIComponent(maChuyen)}/kien-hang`),
 
         // 3. Thao tác chuyến & kiện
         scanPackage: (scanData) => request('/api/tai-xe/quet-kien', {

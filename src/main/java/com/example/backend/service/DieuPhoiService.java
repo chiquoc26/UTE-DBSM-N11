@@ -1,6 +1,8 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.*;
+import com.example.backend.dto.common.*;
+import com.example.backend.dto.chuyengiao.*;
+import com.example.backend.dto.dieuphoi.*;
 import com.example.backend.entity.*;
 import com.example.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -736,5 +738,98 @@ public class DieuPhoiService {
             if (msg.startsWith("ERROR: ")) msg = msg.substring(7);
             throw new RuntimeException(msg.trim());
         }
+    }
+
+    // ========================== PHÂN TRANG BACKEND (SERVER-SIDE PAGINATION) ==========================
+
+    /**
+     * Lấy danh sách tuyến vận chuyển có phân trang (Spring Data Pageable) kèm tìm kiếm.
+     */
+    public PageResponse<TuyenVanChuyen> getTuyenPaged(int page, int size, String search) {
+        if (search != null && !search.isBlank()) {
+            String lower = search.toLowerCase().trim();
+            List<TuyenVanChuyen> all = tuyenVanChuyenRepository.findAll().stream().filter(r ->
+                (r.getMaTuyen() != null && r.getMaTuyen().toLowerCase().contains(lower)) ||
+                (r.getMaKhoDi() != null && r.getMaKhoDi().toLowerCase().contains(lower)) ||
+                (r.getMaKhoDen() != null && r.getMaKhoDen().toLowerCase().contains(lower))
+            ).toList();
+            return PageResponse.of(all, page, size);
+        }
+        int p = Math.max(0, page - 1);
+        int s = (size > 0) ? size : 5;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(p, s);
+        return PageResponse.from(tuyenVanChuyenRepository.findAll(pageable));
+    }
+
+    /**
+     * Lấy danh sách chuyến giao chi tiết có phân trang và bộ lọc trạng thái, tìm kiếm.
+     */
+    public PageResponse<ChuyenGiaoChiTietDTO> getChuyenGiaoChiTietPaged(int page, int size, String trangThai, String search) {
+        List<ChuyenGiaoChiTietDTO> all = getChuyenGiaoChiTietList();
+        if (trangThai != null && !trangThai.isBlank() && !trangThai.equalsIgnoreCase("TAT_CA")) {
+            all = all.stream().filter(c -> trangThai.equalsIgnoreCase(c.getTrangThai())).toList();
+        }
+        if (search != null && !search.isBlank()) {
+            String lower = search.toLowerCase().trim();
+            all = all.stream().filter(c -> 
+                (c.getMaChuyen() != null && c.getMaChuyen().toLowerCase().contains(lower)) ||
+                (c.getTenTaiXe() != null && c.getTenTaiXe().toLowerCase().contains(lower)) ||
+                (c.getBienSo() != null && c.getBienSo().toLowerCase().contains(lower))
+            ).toList();
+        }
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách kiện chờ điều phối có phân trang.
+     */
+    public PageResponse<DonCanDieuPhoiDTO> getDonCanDieuPhoiPaged(int page, int size, String maKho, String loaiChuyen, String maTuyen) {
+        List<DonCanDieuPhoiDTO> all = getAvailableKienHangDTOList(maKho, loaiChuyen, maTuyen);
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách kiện trong chuyến có phân trang.
+     */
+    public PageResponse<KienTrongChuyenDTO> getKienTrongChuyenPaged(String maChuyen, int page, int size) {
+        List<KienTrongChuyenDTO> all = getKienTrongChuyen(maChuyen);
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách chuyến giao entity có phân trang (Spring Data Pageable).
+     */
+    public PageResponse<ChuyenGiao> getChuyenGiaoPaged(String maNvDieuPhoi, int page, int size) {
+        int p = Math.max(0, page - 1);
+        int s = (size > 0) ? size : 5;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(p, s);
+        if (maNvDieuPhoi != null && !maNvDieuPhoi.isBlank()) {
+            return PageResponse.from(chuyenGiaoRepository.findByMaNvDieuPhoi(maNvDieuPhoi, pageable));
+        }
+        return PageResponse.from(chuyenGiaoRepository.findAll(pageable));
+    }
+
+    /**
+     * Lấy danh sách chuyến đang chạy có phân trang (cho Dashboard Tab 2).
+     */
+    public PageResponse<ChuyenGiaoChiTietDTO> getChuyenDangChayPaged(int page, int size) {
+        List<ChuyenGiaoChiTietDTO> all = getChuyenDangChayList();
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách tài xế khả dụng có phân trang (cho Dashboard Tab 3).
+     */
+    public PageResponse<TaiXeKhaDungDTO> getTaiXeKhaDungPaged(int page, int size) {
+        List<TaiXeKhaDungDTO> all = getTaiXeKhaDungList();
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách phương tiện khả dụng có phân trang (cho Dashboard Tab 4).
+     */
+    public PageResponse<PhuongTienKhaDungDTO> getPhuongTienKhaDungPaged(int page, int size) {
+        List<PhuongTienKhaDungDTO> all = getPhuongTienKhaDungList();
+        return PageResponse.of(all, page, size);
     }
 }

@@ -1,4 +1,7 @@
-package com.example.backend.dto;
+package com.example.backend.dto.taixe;
+
+import com.example.backend.dto.chuyengiao.ChuyenGiaoChiTietDTO;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

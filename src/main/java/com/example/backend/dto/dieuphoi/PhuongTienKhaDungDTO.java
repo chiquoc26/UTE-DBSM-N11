@@ -1,4 +1,4 @@
-package com.example.backend.dto;
+package com.example.backend.dto.dieuphoi;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

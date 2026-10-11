@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
-import com.example.backend.dto.*;
+import com.example.backend.dto.common.*;
+import com.example.backend.dto.chuyengiao.*;
+import com.example.backend.dto.taixe.*;
 import com.example.backend.entity.ChiTietChuyenGiao;
 import com.example.backend.entity.ChuyenGiao;
 import com.example.backend.service.TaiXeService;
@@ -33,9 +35,15 @@ public class TaiXeController {
     // ========================== TRA CỨU ==========================
 
     @GetMapping("/chuyen-giao")
-    public ResponseEntity<ApiResponse<List<ChuyenGiao>>> getChuyenGiao(
+    public ResponseEntity<ApiResponse<?>> getChuyenGiao(
             @RequestParam String maTx,
-            @RequestParam(required = false) String trangThai) {
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<ChuyenGiao> paged = taiXeService.getChuyenGiaoByTaiXePaged(maTx, trangThai, page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách chuyến giao phân trang thành công"));
+        }
         List<ChuyenGiao> list;
         if (trangThai != null && !trangThai.isBlank()) {
             list = taiXeService.getChuyenGiaoByTaiXeAndTrangThai(maTx, trangThai);
@@ -46,22 +54,41 @@ public class TaiXeController {
     }
 
     @GetMapping("/chuyen-phan-cong")
-    public ResponseEntity<ApiResponse<List<ChuyenGiaoChiTietDTO>>> getChuyenPhanCong(
-            @RequestParam String maTx) {
+    public ResponseEntity<ApiResponse<?>> getChuyenPhanCong(
+            @RequestParam String maTx,
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<ChuyenGiaoChiTietDTO> paged = taiXeService.getChuyenPhanCongPaged(maTx, page, size, trangThai);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách chuyến phân công phân trang thành công"));
+        }
         List<ChuyenGiaoChiTietDTO> list = taiXeService.getChuyenPhanCongByTaiXe(maTx);
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách chuyến phân công thành công"));
     }
 
     @GetMapping("/kien-can-giao")
-    public ResponseEntity<ApiResponse<List<KienTrongChuyenDTO>>> getKienCanGiao(
-            @RequestParam String maTx) {
+    public ResponseEntity<ApiResponse<?>> getKienCanGiao(
+            @RequestParam String maTx,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<KienTrongChuyenDTO> paged = taiXeService.getKienCanGiaoPaged(maTx, page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách kiện cần giao phân trang thành công"));
+        }
         List<KienTrongChuyenDTO> list = taiXeService.getKienCanGiaoByTaiXe(maTx);
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách kiện cần giao thành công"));
     }
 
     @GetMapping("/kien-da-giao")
-    public ResponseEntity<ApiResponse<List<KienTrongChuyenDTO>>> getKienDaGiao(
-            @RequestParam String maTx) {
+    public ResponseEntity<ApiResponse<?>> getKienDaGiao(
+            @RequestParam String maTx,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<KienTrongChuyenDTO> paged = taiXeService.getKienDaGiaoPaged(maTx, page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách kiện đã giao phân trang thành công"));
+        }
         List<KienTrongChuyenDTO> list = taiXeService.getKienDaGiaoByTaiXe(maTx);
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách kiện đã giao thành công"));
     }
@@ -74,8 +101,14 @@ public class TaiXeController {
     }
 
     @GetMapping("/chuyen-giao/{maChuyen}/kien-hang")
-    public ResponseEntity<ApiResponse<List<KienTrongChuyenDTO>>> getKienTrongChuyen(
-            @PathVariable String maChuyen) {
+    public ResponseEntity<ApiResponse<?>> getKienTrongChuyen(
+            @PathVariable String maChuyen,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<KienTrongChuyenDTO> paged = taiXeService.getKienTrongChuyenPaged(maChuyen, page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách kiện hàng trong chuyến phân trang thành công"));
+        }
         List<KienTrongChuyenDTO> list = taiXeService.getKienTrongChuyen(maChuyen);
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách kiện hàng trong chuyến thành công"));
     }

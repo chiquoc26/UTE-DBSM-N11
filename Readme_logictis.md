@@ -56,19 +56,11 @@ UTEExpress/
 │   ├── controller/
 │   │   ├── DieuPhoiController.java          # REST API cho phân hệ Nhân viên Điều phối (/api/dieu-phoi)
 │   │   └── TaiXeController.java             # REST API cho phân hệ Tài xế (/api/tai-xe)
-│   ├── dto/                                 # Data Transfer Objects cho Request & Response
-│   │   ├── ApiResponse.java                 # Standard Response format {success, message, data, timestamp}
-│   │   ├── DieuPhoiDashboardDTO.java        # Chỉ số KPI và biểu đồ dashboard điều phối
-│   │   ├── ChuyenGiaoChiTietDTO.java        # Chi tiết chuyến giao + danh sách kiện + % tải trọng
-│   │   ├── DonCanDieuPhoiDTO.java           # Kiện hàng chờ điều phối (kèm flag phuHopLoaiChuyen)
-│   │   ├── GanKienRequest.java              # Request gán kiện vào chuyến giao
-│   │   ├── TaoChuyenGiaoRequest.java        # Request tạo chuyến giao mới
-│   │   ├── XuatPhatChuyenRequest.java       # Request xuất phát chuyến
-│   │   ├── TaiXeDashboardDTO.java           # Chỉ số và danh sách chuyến cho tài xế
-│   │   ├── QuetKienRequest.java             # Request quét barcode kiểm tra kiện
-│   │   ├── GiaoThanhCongRequest.java        # Request ghi nhận kết quả phát hàng thành công
-│   │   ├── GiaoThatBaiRequest.java          # Request ghi nhận kết quả phát hàng thất bại
-│   │   └── ...
+│   ├── dto/                                 # Data Transfer Objects (phân theo miền nghiệp vụ)
+│   │   ├── common/                          # DTO dùng chung: ApiResponse, PageResponse
+│   │   ├── dieuphoi/                        # DTOs & Requests phân hệ Điều phối (Dashboard, Đơn cần ĐP, Tạo chuyến, Gán kiện,...)
+│   │   ├── taixe/                           # DTOs & Requests phân hệ Tài xế (Dashboard, Quét kiện, Xuất phát, Giao hàng,...)
+│   │   └── chuyengiao/                      # DTOs Chuyến giao chi tiết & Kiện hàng trong chuyến dùng xuyên suốt các vai trò
 │   ├── entity/                              # JPA Entities ánh xạ CSDL
 │   │   ├── ChuyenGiao.java, ChiTietChuyenGiao.java, ChiTietChuyenGiaoId.java
 │   │   ├── TuyenVanChuyen.java, PhuongTien.java, TaiXe.java, KienHang.java
@@ -156,6 +148,17 @@ Tất cả API đều trả về định dạng đồng nhất qua lớp `ApiRes
   "timestamp": "2026-10-10T15:30:00"
 }
 ```
+
+> **Hỗ trợ Phân trang Hai Tầng (Dual-Mode Pagination)**:
+> Đối với các API trả về danh sách dữ liệu (tuyến, chuyến giao, kiện hàng), hệ thống hỗ trợ song song:
+> 1. **Chế độ Lấy đầy đủ (Client-side slicing)**: Khi không truyền `page` và `size`, API trả về `ApiResponse<List<T>>` để client tự động cắt mảng với độ trễ 0ms.
+> 2. **Chế độ Phân trang Server-side (Backend Pageable)**: Khi truyền `?page=1&size=5` (hoặc 10, 20), API trả về `ApiResponse<PageResponse<T>>` với đầy đủ metadata:
+>    - `items`: Danh sách bản ghi thuộc trang hiện tại
+>    - `page`: Số thứ tự trang hiện tại (1-indexed)
+>    - `size`: Kích thước trang (5, 10, 20)
+>    - `totalItems`: Tổng số bản ghi trong CSDL
+>    - `totalPages`: Tổng số trang
+>    - `hasNext`, `hasPrevious`: Cờ boolean kiểm tra trang kế tiếp/trước đó.
 
 ### 4.1. Nhóm API Điều phối (`/api/dieu-phoi`)
 

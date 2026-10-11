@@ -1,6 +1,6 @@
 package com.example.backend.exception;
 
-import com.example.backend.dto.ApiResponse;
+import com.example.backend.dto.common.ApiResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

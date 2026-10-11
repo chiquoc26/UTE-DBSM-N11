@@ -331,18 +331,20 @@
         let selectedPackageWeights = {};
         let currentVehicleCapacity = 0;
 
+        let currentViewingTripId = '';
+
         const tripsPagination = new TablePagination({
             containerId: 'tripsPagination',
             defaultPageSize: 5,
             pageSizeOptions: [5, 10, 20],
-            onChange: () => renderTripsTable()
+            onChange: (page, size) => loadTrips(page, size)
         });
 
         const tripDetailPagination = new TablePagination({
             containerId: 'tripDetailPagination',
             defaultPageSize: 5,
             pageSizeOptions: [5, 10, 20],
-            onChange: () => renderTripDetailTable()
+            onChange: (page, size) => loadTripDetailPackages(currentViewingTripId, page, size)
         });
 
         async function initPage() {
@@ -845,17 +847,27 @@
             }
         }
 
-        async function loadTrips() {
+        async function loadTrips(page = tripsPagination.currentPage, size = tripsPagination.pageSize) {
             const tbody = document.getElementById('tripsTableBody');
             try {
-                const res = await UteApi.getDetailedTrips();
-                if (res && res.success && Array.isArray(res.data)) {
-                    allTrips = res.data;
-                    currentTripsFiltered = allTrips;
-                    tripsPagination.reset();
-                    renderTripsTable();
+                const q = (document.getElementById('tripSearchInput')?.value || '').trim();
+                const st = document.getElementById('filterStatus')?.value || '';
+
+                const res = await UteApi.getDetailedTrips({ page, size, trangThai: st, search: q });
+                if (res && res.success && res.data) {
+                    if (res.data.items) {
+                        // Nhận kết quả phân trang trực tiếp từ Server-side PageResponse
+                        allTrips = res.data.items;
+                        renderTripsList(res.data.items);
+                        tripsPagination.setServerPageInfo(res.data);
+                    } else if (Array.isArray(res.data)) {
+                        // Fallback client-side
+                        allTrips = res.data;
+                        const paged = tripsPagination.paginate(allTrips);
+                        renderTripsList(paged);
+                    }
                 } else {
-                    currentTripsFiltered = [];
+                    allTrips = [];
                     tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có chuyến giao nào.</td></tr>`;
                     document.getElementById('tripsPagination').innerHTML = '';
                 }
@@ -866,17 +878,14 @@
             }
         }
 
-        function renderTripsTable() {
+        function renderTripsList(trips) {
             const tbody = document.getElementById('tripsTableBody');
-            if (!currentTripsFiltered || currentTripsFiltered.length === 0) {
+            if (!trips || trips.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Không tìm thấy chuyến nào phù hợp.</td></tr>`;
-                document.getElementById('tripsPagination').innerHTML = '';
                 return;
             }
 
-            const paged = tripsPagination.paginate(currentTripsFiltered);
-
-            tbody.innerHTML = paged.map(t => {
+            tbody.innerHTML = trips.map(t => {
                 const routeName = t.loaiChuyen === 'LIEN_KHO' 
                     ? `${t.tenKhoXuatPhat || 'Kho xuất phát'} ➔ ${t.tenDiemDen || 'Kho đích'}`
                     : `Giao cuối: ${t.tenKhoXuatPhat || 'Kho'} ➔ Địa chỉ khách`;
@@ -919,27 +928,8 @@
         }
 
         function applyTripFilter() {
-            const q = (document.getElementById('tripSearchInput').value || '').trim().toLowerCase();
-            const st = document.getElementById('filterStatus').value;
-
-            let filtered = allTrips;
-            if (st) {
-                filtered = filtered.filter(t => t.trangThai === st);
-            }
-            if (q) {
-                filtered = filtered.filter(t => 
-                    (t.maChuyen && t.maChuyen.toLowerCase().includes(q)) ||
-                    (t.maTuyen && t.maTuyen.toLowerCase().includes(q)) ||
-                    (t.tenTaiXe && t.tenTaiXe.toLowerCase().includes(q)) ||
-                    (t.maTx && t.maTx.toLowerCase().includes(q)) ||
-                    (t.bienSo && t.bienSo.toLowerCase().includes(q)) ||
-                    (t.tenKhoXuatPhat && t.tenKhoXuatPhat.toLowerCase().includes(q)) ||
-                    (t.tenDiemDen && t.tenDiemDen.toLowerCase().includes(q))
-                );
-            }
-            currentTripsFiltered = filtered;
             tripsPagination.reset();
-            renderTripsTable();
+            loadTrips(1, tripsPagination.pageSize);
         }
 
         async function openCreateTripModal() {
@@ -1077,26 +1067,64 @@
         }
 
         async function viewTripDetail(maChuyen) {
+            currentViewingTripId = maChuyen;
             document.getElementById('tripDetailTitle').innerText = `Chi tiết kiện hàng thuộc chuyến ${maChuyen}`;
+            openModal('tripDetailModal');
+            tripDetailPagination.reset();
+            await loadTripDetailPackages(maChuyen, 1, tripDetailPagination.pageSize);
+        }
+
+        async function loadTripDetailPackages(maChuyen, page = tripDetailPagination.currentPage, size = tripDetailPagination.pageSize) {
             const tbody = document.getElementById('tripDetailBody');
             tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">Đang tải chi tiết...</td></tr>`;
-            document.getElementById('tripDetailPagination').innerHTML = '';
-            openModal('tripDetailModal');
 
             try {
-                const res = await UteApi.getTripPackages(maChuyen);
-                if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                    currentTripPkgsList = res.data;
-                    tripDetailPagination.reset();
-                    renderTripDetailTable();
+                const res = await UteApi.getTripPackages(maChuyen, page, size);
+                if (res && res.success && res.data) {
+                    if (res.data.items) {
+                        renderTripDetailList(res.data.items);
+                        tripDetailPagination.setServerPageInfo(res.data);
+                    } else if (Array.isArray(res.data)) {
+                        currentTripPkgsList = res.data;
+                        const paged = tripDetailPagination.paginate(currentTripPkgsList);
+                        renderTripDetailList(paged);
+                    }
                 } else {
-                    currentTripPkgsList = [];
-                    renderTripDetailTable();
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có kiện nào được gán vào chuyến này.</td></tr>`;
+                    document.getElementById('tripDetailPagination').innerHTML = '';
                 }
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 16px;">Lỗi tải chi tiết: ${err.message}</td></tr>`;
                 document.getElementById('tripDetailPagination').innerHTML = '';
             }
+        }
+
+        function renderTripDetailList(pkgs) {
+            const tbody = document.getElementById('tripDetailBody');
+            if (!pkgs || pkgs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có kiện nào được gán vào chuyến này.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pkgs.map(p => {
+                const tgQuet = p.thoiGianQuet ? new Date(p.thoiGianQuet).toLocaleString('vi-VN') : '---';
+                const badge = getStatusBadge(p.trangThai);
+                const codFormatted = (p.cod || 0).toLocaleString('vi-VN') + ' đ';
+                const receiverInfo = p.tenNguoiNhan ? `${p.tenNguoiNhan}<br><small style="color: var(--text-muted);">${p.sdtNhan || ''} - ${p.diaChiGiao || ''}</small>` : '---';
+
+                return `
+                    <tr>
+                        <td><strong style="color: var(--primary-blue);">${p.maKien}</strong></td>
+                        <td>${p.maDh || '---'}</td>
+                        <td>${p.khoiLuong || 0} kg</td>
+                        <td>${receiverInfo}</td>
+                        <td>${codFormatted}</td>
+                        <td>${badge}</td>
+                        <td>${tgQuet}</td>
+                        <td>${p.ghiChu || '---'}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         let currentEditingTrip = null;

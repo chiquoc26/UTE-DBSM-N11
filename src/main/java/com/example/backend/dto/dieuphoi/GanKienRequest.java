@@ -1,15 +1,14 @@
-package com.example.backend.dto;
+package com.example.backend.dto.dieuphoi;
 
 import lombok.*;
 
 /**
- * DTO nhận request giao thất bại.
+ * DTO nhận request gán kiện vào chuyến giao.
  */
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class GiaoThatBaiRequest {
+public class GanKienRequest {
     private String maChuyen;
     private String maKien;
     private String maNd;
-    private String lyDo;
 }

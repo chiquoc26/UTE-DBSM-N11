@@ -1,6 +1,8 @@
 package com.example.backend.controller;
 
-import com.example.backend.dto.*;
+import com.example.backend.dto.common.*;
+import com.example.backend.dto.chuyengiao.*;
+import com.example.backend.dto.dieuphoi.*;
 import com.example.backend.entity.*;
 import com.example.backend.service.DieuPhoiService;
 import lombok.RequiredArgsConstructor;
@@ -29,25 +31,52 @@ public class DieuPhoiController {
     }
 
     @GetMapping("/don-can-dieu-phoi")
-    public ResponseEntity<ApiResponse<List<DonCanDieuPhoiDTO>>> getDonCanDieuPhoi() {
+    public ResponseEntity<ApiResponse<?>> getDonCanDieuPhoi(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String maKho,
+            @RequestParam(required = false) String loaiChuyen,
+            @RequestParam(required = false) String maTuyen) {
+        if (page != null && size != null) {
+            PageResponse<DonCanDieuPhoiDTO> paged = dieuPhoiService.getDonCanDieuPhoiPaged(page, size, maKho, loaiChuyen, maTuyen);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách đơn cần điều phối phân trang thành công"));
+        }
         List<DonCanDieuPhoiDTO> list = dieuPhoiService.getDonCanDieuPhoiList();
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách đơn cần điều phối thành công"));
     }
 
     @GetMapping("/chuyen-dang-chay")
-    public ResponseEntity<ApiResponse<List<ChuyenGiaoChiTietDTO>>> getChuyenDangChay() {
+    public ResponseEntity<ApiResponse<?>> getChuyenDangChay(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<ChuyenGiaoChiTietDTO> paged = dieuPhoiService.getChuyenDangChayPaged(page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách chuyến đang chạy phân trang thành công"));
+        }
         List<ChuyenGiaoChiTietDTO> list = dieuPhoiService.getChuyenDangChayList();
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách chuyến đang chạy thành công"));
     }
 
     @GetMapping("/tai-xe-kha-dung")
-    public ResponseEntity<ApiResponse<List<TaiXeKhaDungDTO>>> getTaiXeKhaDung() {
+    public ResponseEntity<ApiResponse<?>> getTaiXeKhaDung(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<TaiXeKhaDungDTO> paged = dieuPhoiService.getTaiXeKhaDungPaged(page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách tài xế khả dụng phân trang thành công"));
+        }
         List<TaiXeKhaDungDTO> list = dieuPhoiService.getTaiXeKhaDungList();
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách tài xế khả dụng thành công"));
     }
 
     @GetMapping("/phuong-tien-kha-dung")
-    public ResponseEntity<ApiResponse<List<PhuongTienKhaDungDTO>>> getPhuongTienKhaDung() {
+    public ResponseEntity<ApiResponse<?>> getPhuongTienKhaDung(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<PhuongTienKhaDungDTO> paged = dieuPhoiService.getPhuongTienKhaDungPaged(page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách phương tiện khả dụng phân trang thành công"));
+        }
         List<PhuongTienKhaDungDTO> list = dieuPhoiService.getPhuongTienKhaDungList();
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách phương tiện khả dụng thành công"));
     }
@@ -55,7 +84,14 @@ public class DieuPhoiController {
     // ========================== TUYẾN VẬN CHUYỂN (CRUD) ==========================
 
     @GetMapping("/tuyen")
-    public ResponseEntity<ApiResponse<List<TuyenVanChuyen>>> getAllTuyen() {
+    public ResponseEntity<ApiResponse<?>> getAllTuyen(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String search) {
+        if (page != null && size != null) {
+            PageResponse<TuyenVanChuyen> paged = dieuPhoiService.getTuyenPaged(page, size, search);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách tuyến phân trang thành công"));
+        }
         List<TuyenVanChuyen> list = dieuPhoiService.getAllTuyen();
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách tuyến thành công"));
     }
@@ -130,21 +166,41 @@ public class DieuPhoiController {
     }
 
     @GetMapping("/chuyen-giao")
-    public ResponseEntity<ApiResponse<List<ChuyenGiao>>> getChuyenGiao(
-            @RequestParam(required = false) String maNvDieuPhoi) {
+    public ResponseEntity<ApiResponse<?>> getChuyenGiao(
+            @RequestParam(required = false) String maNvDieuPhoi,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<ChuyenGiao> paged = dieuPhoiService.getChuyenGiaoPaged(maNvDieuPhoi, page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách chuyến giao phân trang thành công"));
+        }
         List<ChuyenGiao> list = dieuPhoiService.getChuyenGiaoByNvDieuPhoi(maNvDieuPhoi);
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách chuyến giao thành công"));
     }
 
     @GetMapping("/chuyen-giao-chi-tiet")
-    public ResponseEntity<ApiResponse<List<ChuyenGiaoChiTietDTO>>> getChuyenGiaoChiTiet() {
+    public ResponseEntity<ApiResponse<?>> getChuyenGiaoChiTiet(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String trangThai,
+            @RequestParam(required = false) String search) {
+        if (page != null && size != null) {
+            PageResponse<ChuyenGiaoChiTietDTO> paged = dieuPhoiService.getChuyenGiaoChiTietPaged(page, size, trangThai, search);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy danh sách chuyến giao chi tiết phân trang thành công"));
+        }
         List<ChuyenGiaoChiTietDTO> list = dieuPhoiService.getChuyenGiaoChiTietList();
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy danh sách chuyến giao chi tiết thành công"));
     }
 
     @GetMapping("/chuyen-giao/{maChuyen}/chi-tiet")
-    public ResponseEntity<ApiResponse<List<KienTrongChuyenDTO>>> getChiTietChuyen(
-            @PathVariable String maChuyen) {
+    public ResponseEntity<ApiResponse<?>> getChiTietChuyen(
+            @PathVariable String maChuyen,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        if (page != null && size != null) {
+            PageResponse<KienTrongChuyenDTO> paged = dieuPhoiService.getKienTrongChuyenPaged(maChuyen, page, size);
+            return ResponseEntity.ok(ApiResponse.ok(paged, "Lấy chi tiết kiện hàng trong chuyến phân trang thành công"));
+        }
         List<KienTrongChuyenDTO> list = dieuPhoiService.getKienTrongChuyen(maChuyen);
         return ResponseEntity.ok(ApiResponse.ok(list, "Lấy chi tiết kiện hàng trong chuyến thành công"));
     }

@@ -1,8 +1,8 @@
 package com.example.backend.service;
 
-import com.example.backend.dto.ChuyenGiaoChiTietDTO;
-import com.example.backend.dto.KienTrongChuyenDTO;
-import com.example.backend.dto.TaiXeDashboardDTO;
+import com.example.backend.dto.common.*;
+import com.example.backend.dto.chuyengiao.*;
+import com.example.backend.dto.taixe.*;
 import com.example.backend.entity.ChiTietChuyenGiao;
 import com.example.backend.entity.ChuyenGiao;
 import com.example.backend.entity.TaiXe;
@@ -473,4 +473,55 @@ public class TaiXeService {
             throw new RuntimeException(msg.trim());
         }
     }
+
+    // ========================== PHÂN TRANG BACKEND (SERVER-SIDE PAGINATION) ==========================
+
+    /**
+     * Lấy danh sách chuyến phân công cho tài xế có phân trang.
+     */
+    public PageResponse<ChuyenGiaoChiTietDTO> getChuyenPhanCongPaged(String maTx, int page, int size, String trangThai) {
+        List<ChuyenGiaoChiTietDTO> all = getChuyenPhanCongByTaiXe(maTx);
+        if (trangThai != null && !trangThai.isBlank() && !trangThai.equalsIgnoreCase("TAT_CA")) {
+            all = all.stream().filter(c -> trangThai.equalsIgnoreCase(c.getTrangThai())).toList();
+        }
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách chuyến entity của tài xế có phân trang (Spring Data Pageable).
+     */
+    public PageResponse<ChuyenGiao> getChuyenGiaoByTaiXePaged(String maTx, String trangThai, int page, int size) {
+        int p = Math.max(0, page - 1);
+        int s = (size > 0) ? size : 5;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(p, s);
+        if (trangThai != null && !trangThai.isBlank()) {
+            return PageResponse.from(chuyenGiaoRepository.findByMaTxAndTrangThai(maTx, trangThai, pageable));
+        }
+        return PageResponse.from(chuyenGiaoRepository.findByMaTx(maTx, pageable));
+    }
+
+    /**
+     * Lấy danh sách kiện trong chuyến của tài xế có phân trang.
+     */
+    public PageResponse<KienTrongChuyenDTO> getKienTrongChuyenPaged(String maChuyen, int page, int size) {
+        List<KienTrongChuyenDTO> all = getKienTrongChuyen(maChuyen);
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách kiện cần giao của tài xế có phân trang (Server-side).
+     */
+    public PageResponse<KienTrongChuyenDTO> getKienCanGiaoPaged(String maTx, int page, int size) {
+        List<KienTrongChuyenDTO> all = getKienCanGiaoByTaiXe(maTx);
+        return PageResponse.of(all, page, size);
+    }
+
+    /**
+     * Lấy danh sách kiện đã giao của tài xế có phân trang (Server-side).
+     */
+    public PageResponse<KienTrongChuyenDTO> getKienDaGiaoPaged(String maTx, int page, int size) {
+        List<KienTrongChuyenDTO> all = getKienDaGiaoByTaiXe(maTx);
+        return PageResponse.of(all, page, size);
+    }
 }
+

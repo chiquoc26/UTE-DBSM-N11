@@ -1,14 +1,15 @@
-package com.example.backend.dto;
+package com.example.backend.dto.taixe;
 
 import lombok.*;
 
 /**
- * DTO nhận request gán kiện vào chuyến giao.
+ * DTO nhận request quét kiện từ tài xế.
  */
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
-public class GanKienRequest {
+public class QuetKienRequest {
     private String maChuyen;
     private String maKien;
     private String maNd;
+    private String ghiChu;
 }

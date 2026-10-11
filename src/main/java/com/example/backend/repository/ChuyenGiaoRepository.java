@@ -17,15 +17,22 @@ public interface ChuyenGiaoRepository extends JpaRepository<ChuyenGiao, String> 
      */
     List<ChuyenGiao> findByMaNvDieuPhoi(String maNvDieuPhoi);
 
+    org.springframework.data.domain.Page<ChuyenGiao> findByMaNvDieuPhoi(String maNvDieuPhoi, org.springframework.data.domain.Pageable pageable);
+
     /**
      * Tra cứu chuyến giao theo tài xế.
      */
     List<ChuyenGiao> findByMaTx(String maTx);
 
+    org.springframework.data.domain.Page<ChuyenGiao> findByMaTx(String maTx, org.springframework.data.domain.Pageable pageable);
+
     /**
      * Tra cứu chuyến giao theo tài xế và trạng thái.
      */
     List<ChuyenGiao> findByMaTxAndTrangThai(String maTx, String trangThai);
+
+    org.springframework.data.domain.Page<ChuyenGiao> findByMaTxAndTrangThai(String maTx, String trangThai, org.springframework.data.domain.Pageable pageable);
+
 
 
 

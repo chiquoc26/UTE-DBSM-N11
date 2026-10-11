@@ -147,6 +147,15 @@ class TablePagination {
         return items.slice(start, start + this.pageSize);
     }
 
+    setServerPageInfo(info) {
+        if (!info) return;
+        if (info.page !== undefined) this.currentPage = info.page;
+        if (info.size !== undefined) this.pageSize = info.size;
+        if (info.totalItems !== undefined) this.totalItems = info.totalItems;
+        this.render();
+    }
+
+
     render() {
         const container = this.getContainer();
         if (!container) return;

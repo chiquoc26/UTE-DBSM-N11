@@ -1,4 +1,4 @@
-package com.example.backend.dto;
+package com.example.backend.dto.chuyengiao;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
