@@ -241,6 +241,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="driverPaginationTab1"></div>
                     </div>
 
                     <!-- PANE 2: CHUYẾN ĐANG THỰC HIỆN (THẺ 2) -->
@@ -265,6 +266,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="driverPaginationTab2"></div>
                     </div>
 
                     <!-- PANE 3: KIỆN CẦN GIAO (THẺ 3) -->
@@ -291,6 +293,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="driverPaginationTab3"></div>
                     </div>
 
                     <!-- PANE 4: KIỆN ĐÃ GIAO THÀNH CÔNG (THẺ 4) -->
@@ -316,6 +319,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="driverPaginationTab4"></div>
                     </div>
                 </div>
             </div>
@@ -329,6 +333,40 @@
         let assignedTripsList = [];
         let pendingPackagesList = [];
         let deliveredPackagesList = [];
+
+        let currentAssignedFiltered = [];
+        let currentRunningFiltered = [];
+        let currentPendingPkgsFiltered = [];
+        let currentDeliveredFiltered = [];
+
+        // PAGINATION INSTANCES (5, 10, 20 DÒNG/TRANG)
+        const driverPaginationTab1 = new TablePagination({
+            containerId: 'driverPaginationTab1',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderAssignedTripsTable()
+        });
+
+        const driverPaginationTab2 = new TablePagination({
+            containerId: 'driverPaginationTab2',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderRunningTripsTable()
+        });
+
+        const driverPaginationTab3 = new TablePagination({
+            containerId: 'driverPaginationTab3',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderPendingPackagesTable()
+        });
+
+        const driverPaginationTab4 = new TablePagination({
+            containerId: 'driverPaginationTab4',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderDeliveredPackagesTable()
+        });
 
         function getCurrentDriverId() {
             return localStorage.getItem('ute_current_driver') || 'TX001';
@@ -364,6 +402,10 @@
                 assignedTripsList = (assignedRes && assignedRes.data) ? assignedRes.data : [];
                 pendingPackagesList = (pendingRes && pendingRes.data) ? pendingRes.data : [];
                 deliveredPackagesList = (deliveredRes && deliveredRes.data) ? deliveredRes.data : [];
+
+                currentAssignedFiltered = assignedTripsList;
+                currentPendingPkgsFiltered = pendingPackagesList;
+                currentDeliveredFiltered = deliveredPackagesList;
 
                 // Cập nhật lại số liệu nếu có chênh lệch
                 if (assignedTripsList.length > 0) {
@@ -421,38 +463,45 @@
             if (dateInput) dateInput.value = '';
 
             if (tabIdx === 1) {
+                currentAssignedFiltered = assignedTripsList;
                 titleElem.innerHTML = '📋 Danh sách chuyến được phân công';
-                badgeElem.innerText = `${assignedTripsList.length} chuyến`;
+                badgeElem.innerText = `${currentAssignedFiltered.length} chuyến`;
                 badgeElem.className = 'badge badge-primary';
                 actionBtn.innerHTML = '🔍 Xem chi tiết chuyến';
                 actionBtn.href = assignedTripsList.length > 0 ? `16-trip-detail.html?id=${assignedTripsList[0].maChuyen}` : '16-trip-detail.html';
                 dateWrapper.style.display = 'none';
-                renderAssignedTripsTable(assignedTripsList);
+                driverPaginationTab1.reset();
+                renderAssignedTripsTable();
             } else if (tabIdx === 2) {
-                const runningTrips = assignedTripsList.filter(t => t.trangThai === 'Đang đi');
+                currentRunningFiltered = assignedTripsList.filter(t => t.trangThai === 'Đang đi');
                 titleElem.innerHTML = '🚚 Danh sách chuyến đang thực hiện';
-                badgeElem.innerText = `${runningTrips.length} chuyến đang chạy`;
+                badgeElem.innerText = `${currentRunningFiltered.length} chuyến đang chạy`;
                 badgeElem.className = 'badge badge-info';
                 actionBtn.innerHTML = '📷 Cập nhật phát hàng';
-                actionBtn.href = runningTrips.length > 0 ? `17-delivery-update.html?id=${runningTrips[0].maChuyen}` : '17-delivery-update.html';
+                actionBtn.href = currentRunningFiltered.length > 0 ? `17-delivery-update.html?id=${currentRunningFiltered[0].maChuyen}` : '17-delivery-update.html';
                 dateWrapper.style.display = 'none';
-                renderRunningTripsTable(runningTrips);
+                driverPaginationTab2.reset();
+                renderRunningTripsTable();
             } else if (tabIdx === 3) {
+                currentPendingPkgsFiltered = pendingPackagesList;
                 titleElem.innerHTML = '📦 Danh sách kiện cần giao';
-                badgeElem.innerText = `${pendingPackagesList.length} kiện cần giao`;
+                badgeElem.innerText = `${currentPendingPkgsFiltered.length} kiện cần giao`;
                 badgeElem.className = 'badge badge-warning';
                 actionBtn.innerHTML = '📷 Quét mã / Phát hàng';
                 actionBtn.href = '17-delivery-update.html';
                 dateWrapper.style.display = 'none';
-                renderPendingPackagesTable(pendingPackagesList);
+                driverPaginationTab3.reset();
+                renderPendingPackagesTable();
             } else if (tabIdx === 4) {
+                currentDeliveredFiltered = deliveredPackagesList;
                 titleElem.innerHTML = '✓ Lịch sử kiện đã giao thành công';
-                badgeElem.innerText = `${deliveredPackagesList.length} kiện hoàn tất`;
+                badgeElem.innerText = `${currentDeliveredFiltered.length} kiện hoàn tất`;
                 badgeElem.className = 'badge badge-success';
                 actionBtn.innerHTML = '📋 Chuyến của tôi';
                 actionBtn.href = '16-trip-detail.html';
                 dateWrapper.style.display = 'inline-flex';
-                renderDeliveredPackagesTable(deliveredPackagesList);
+                driverPaginationTab4.reset();
+                renderDeliveredPackagesTable();
             }
 
             if (scroll) {
@@ -465,14 +514,17 @@
 
         // ========================== RENDERING TABLES ==========================
 
-        function renderAssignedTripsTable(trips) {
+        function renderAssignedTripsTable() {
             const tbody = document.getElementById('tbodyAssignedTrips');
-            if (!trips || trips.length === 0) {
+            if (!currentAssignedFiltered || currentAssignedFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Tài xế chưa có chuyến giao nào được phân công.</td></tr>`;
+                document.getElementById('driverPaginationTab1').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = trips.map(t => {
+            const paged = driverPaginationTab1.paginate(currentAssignedFiltered);
+
+            tbody.innerHTML = paged.map(t => {
                 const route = t.loaiChuyen === 'LIEN_KHO'
                     ? `${t.tenKhoXuatPhat || 'Kho xuất phát'} ➔ ${t.tenDiemDen || 'Kho đích'}`
                     : `Giao cuối: ${t.tenKhoXuatPhat || 'Kho'} ➔ Khách hàng`;
@@ -522,14 +574,17 @@
             }).join('');
         }
 
-        function renderRunningTripsTable(trips) {
+        function renderRunningTripsTable() {
             const tbody = document.getElementById('tbodyRunningTrips');
-            if (!trips || trips.length === 0) {
+            if (!currentRunningFiltered || currentRunningFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">Hiện tại không có chuyến nào đang thực hiện chạy trên đường.</td></tr>`;
+                document.getElementById('driverPaginationTab2').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = trips.map(t => {
+            const paged = driverPaginationTab2.paginate(currentRunningFiltered);
+
+            tbody.innerHTML = paged.map(t => {
                 const route = t.loaiChuyen === 'LIEN_KHO'
                     ? `${t.tenKhoXuatPhat || 'Kho xuất phát'} ➔ ${t.tenDiemDen || 'Kho đích'}`
                     : `Giao cuối: ${t.tenKhoXuatPhat || 'Kho'} ➔ Khách hàng`;
@@ -574,14 +629,17 @@
             }).join('');
         }
 
-        function renderPendingPackagesTable(pkgs) {
+        function renderPendingPackagesTable() {
             const tbody = document.getElementById('tbodyPendingPackages');
-            if (!pkgs || pkgs.length === 0) {
+            if (!currentPendingPkgsFiltered || currentPendingPkgsFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">Tất cả kiện hàng đã được xử lý xong, không còn kiện nào cần giao.</td></tr>`;
+                document.getElementById('driverPaginationTab3').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = pkgs.map(p => {
+            const paged = driverPaginationTab3.paginate(currentPendingPkgsFiltered);
+
+            tbody.innerHTML = paged.map(p => {
                 const codVal = Number(p.cod || 0);
                 const codStr = codVal > 0 ? codVal.toLocaleString('vi-VN') + ' đ' : '0 đ';
                 const badgeCls = p.trangThai === 'Đã quét' ? 'badge-primary' : 'badge-warning';
@@ -628,14 +686,17 @@
             }).join('');
         }
 
-        function renderDeliveredPackagesTable(pkgs) {
+        function renderDeliveredPackagesTable() {
             const tbody = document.getElementById('tbodyDeliveredPackages');
-            if (!pkgs || pkgs.length === 0) {
+            if (!currentDeliveredFiltered || currentDeliveredFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">Chưa có lịch sử kiện hàng đã giao thành công phù hợp bộ lọc.</td></tr>`;
+                document.getElementById('driverPaginationTab4').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = pkgs.map(p => {
+            const paged = driverPaginationTab4.paginate(currentDeliveredFiltered);
+
+            tbody.innerHTML = paged.map(p => {
                 const delivTime = p.thoiGianGiao ? new Date(p.thoiGianGiao).toLocaleString('vi-VN') : (p.thoiGianQuet ? new Date(p.thoiGianQuet).toLocaleString('vi-VN') : 'Hoàn tất');
 
                 return `
@@ -683,34 +744,40 @@
             const dateVal = document.getElementById('driverDateFilterInput')?.value;
 
             if (currentDriverTab === 1) {
-                const filtered = assignedTripsList.filter(t => {
+                currentAssignedFiltered = assignedTripsList.filter(t => {
                     return !q || (t.maChuyen && t.maChuyen.toLowerCase().includes(q))
                               || (t.bienSo && t.bienSo.toLowerCase().includes(q))
                               || (t.tenKhoXuatPhat && t.tenKhoXuatPhat.toLowerCase().includes(q))
                               || (t.tenDiemDen && t.tenDiemDen.toLowerCase().includes(q))
                               || (t.trangThai && t.trangThai.toLowerCase().includes(q));
                 });
-                renderAssignedTripsTable(filtered);
+                driverPaginationTab1.reset();
+                renderAssignedTripsTable();
+                document.getElementById('activeDriverSectionBadge').innerText = `${currentAssignedFiltered.length} chuyến`;
             } else if (currentDriverTab === 2) {
                 const running = assignedTripsList.filter(t => t.trangThai === 'Đang đi');
-                const filtered = running.filter(t => {
+                currentRunningFiltered = running.filter(t => {
                     return !q || (t.maChuyen && t.maChuyen.toLowerCase().includes(q))
                               || (t.bienSo && t.bienSo.toLowerCase().includes(q))
                               || (t.tenKhoXuatPhat && t.tenKhoXuatPhat.toLowerCase().includes(q))
                               || (t.tenDiemDen && t.tenDiemDen.toLowerCase().includes(q));
                 });
-                renderRunningTripsTable(filtered);
+                driverPaginationTab2.reset();
+                renderRunningTripsTable();
+                document.getElementById('activeDriverSectionBadge').innerText = `${currentRunningFiltered.length} chuyến đang chạy`;
             } else if (currentDriverTab === 3) {
-                const filtered = pendingPackagesList.filter(p => {
+                currentPendingPkgsFiltered = pendingPackagesList.filter(p => {
                     return !q || (p.maKien && p.maKien.toLowerCase().includes(q))
                               || (p.maChuyen && p.maChuyen.toLowerCase().includes(q))
                               || (p.tenNguoiNhan && p.tenNguoiNhan.toLowerCase().includes(q))
                               || (p.sdtNhan && p.sdtNhan.toLowerCase().includes(q))
                               || (p.diaChiGiao && p.diaChiGiao.toLowerCase().includes(q));
                 });
-                renderPendingPackagesTable(filtered);
+                driverPaginationTab3.reset();
+                renderPendingPackagesTable();
+                document.getElementById('activeDriverSectionBadge').innerText = `${currentPendingPkgsFiltered.length} kiện cần giao`;
             } else if (currentDriverTab === 4) {
-                const filtered = deliveredPackagesList.filter(p => {
+                currentDeliveredFiltered = deliveredPackagesList.filter(p => {
                     const matchQ = !q || (p.maKien && p.maKien.toLowerCase().includes(q))
                                       || (p.maChuyen && p.maChuyen.toLowerCase().includes(q))
                                       || (p.tenNguoiNhan && p.tenNguoiNhan.toLowerCase().includes(q))
@@ -733,7 +800,9 @@
                     }
                     return matchQ && matchDate;
                 });
-                renderDeliveredPackagesTable(filtered);
+                driverPaginationTab4.reset();
+                renderDeliveredPackagesTable();
+                document.getElementById('activeDriverSectionBadge').innerText = `${currentDeliveredFiltered.length} kiện hoàn tất`;
             }
         }
 

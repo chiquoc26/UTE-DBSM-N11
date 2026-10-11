@@ -111,6 +111,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="tripPkgsPagination"></div>
                 </div>
             </div>
         </main>
@@ -129,6 +130,14 @@
 
         let currentTripId = '';
         let currentTripData = null;
+        let currentTripPkgsList = [];
+
+        const tripPkgsPagination = new TablePagination({
+            containerId: 'tripPkgsPagination',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderPackagesTable()
+        });
 
         async function initPage() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -197,7 +206,9 @@
                 }
 
                 if (pkgsRes && pkgsRes.success) {
-                    renderPackagesTable(pkgsRes.data || []);
+                    currentTripPkgsList = pkgsRes.data || [];
+                    tripPkgsPagination.reset();
+                    renderPackagesTable();
                 }
             } catch (err) {
                 console.error('Lỗi load chi tiết chuyến:', err);
@@ -299,18 +310,20 @@
             `;
         }
 
-        function renderPackagesTable(pkgs) {
+        function renderPackagesTable() {
             const tbody = document.getElementById('tripPkgsBody');
-            document.getElementById('pkgTableTitle').innerText = `Danh sách kiện hàng gán trên chuyến (${pkgs.length} kiện)`;
+            document.getElementById('pkgTableTitle').innerText = `Danh sách kiện hàng gán trên chuyến (${currentTripPkgsList.length} kiện)`;
 
-            if (pkgs.length === 0) {
+            if (!currentTripPkgsList || currentTripPkgsList.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Chuyến này chưa được gán kiện hàng nào.</td></tr>`;
+                document.getElementById('tripPkgsPagination').innerHTML = '';
                 return;
             }
 
             const isLienKho = currentTripData && currentTripData.loaiChuyen === 'LIEN_KHO';
+            const paged = tripPkgsPagination.paginate(currentTripPkgsList);
 
-            tbody.innerHTML = pkgs.map(p => {
+            tbody.innerHTML = paged.map(p => {
                 const badge = getStatusBadge(p.trangThai);
                 const codFormatted = (p.cod || 0).toLocaleString('vi-VN') + ' đ';
 

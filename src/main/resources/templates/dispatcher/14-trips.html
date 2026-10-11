@@ -101,6 +101,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="tripsPagination"></div>
                 </div>
             </div>
         </main>
@@ -308,6 +309,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div id="tripDetailPagination"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('tripDetailModal')">Đóng</button>
@@ -319,6 +321,8 @@
     <script src="../../static/js/components.js"></script>
     <script>
         let allTrips = [];
+        let currentTripsFiltered = [];
+        let currentTripPkgsList = [];
         let allRoutes = [];
         let allDrivers = [];
         let allVehicles = [];
@@ -326,6 +330,20 @@
         let availablePackages = [];
         let selectedPackageWeights = {};
         let currentVehicleCapacity = 0;
+
+        const tripsPagination = new TablePagination({
+            containerId: 'tripsPagination',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderTripsTable()
+        });
+
+        const tripDetailPagination = new TablePagination({
+            containerId: 'tripDetailPagination',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderTripDetailTable()
+        });
 
         async function initPage() {
             initDefaultDates();
@@ -833,24 +851,32 @@
                 const res = await UteApi.getDetailedTrips();
                 if (res && res.success && Array.isArray(res.data)) {
                     allTrips = res.data;
-                    renderTripsTable(allTrips);
+                    currentTripsFiltered = allTrips;
+                    tripsPagination.reset();
+                    renderTripsTable();
                 } else {
+                    currentTripsFiltered = [];
                     tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có chuyến giao nào.</td></tr>`;
+                    document.getElementById('tripsPagination').innerHTML = '';
                 }
             } catch (err) {
                 console.error('Lỗi load trips:', err);
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 20px;">⚠️ Lỗi kết nối backend (${err.message})</td></tr>`;
+                document.getElementById('tripsPagination').innerHTML = '';
             }
         }
 
-        function renderTripsTable(trips) {
+        function renderTripsTable() {
             const tbody = document.getElementById('tripsTableBody');
-            if (!trips || trips.length === 0) {
+            if (!currentTripsFiltered || currentTripsFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Không tìm thấy chuyến nào phù hợp.</td></tr>`;
+                document.getElementById('tripsPagination').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = trips.map(t => {
+            const paged = tripsPagination.paginate(currentTripsFiltered);
+
+            tbody.innerHTML = paged.map(t => {
                 const routeName = t.loaiChuyen === 'LIEN_KHO' 
                     ? `${t.tenKhoXuatPhat || 'Kho xuất phát'} ➔ ${t.tenDiemDen || 'Kho đích'}`
                     : `Giao cuối: ${t.tenKhoXuatPhat || 'Kho'} ➔ Địa chỉ khách`;
@@ -911,7 +937,9 @@
                     (t.tenDiemDen && t.tenDiemDen.toLowerCase().includes(q))
                 );
             }
-            renderTripsTable(filtered);
+            currentTripsFiltered = filtered;
+            tripsPagination.reset();
+            renderTripsTable();
         }
 
         async function openCreateTripModal() {
@@ -1018,39 +1046,56 @@
             }
         }
 
+        function renderTripDetailTable() {
+            const tbody = document.getElementById('tripDetailBody');
+            if (!currentTripPkgsList || currentTripPkgsList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có kiện nào được gán vào chuyến này.</td></tr>`;
+                document.getElementById('tripDetailPagination').innerHTML = '';
+                return;
+            }
+
+            const paged = tripDetailPagination.paginate(currentTripPkgsList);
+            tbody.innerHTML = paged.map(p => {
+                const tgQuet = p.thoiGianQuet ? new Date(p.thoiGianQuet).toLocaleString('vi-VN') : '---';
+                const badge = getStatusBadge(p.trangThai);
+                const codFormatted = (p.cod || 0).toLocaleString('vi-VN') + ' đ';
+                const receiverInfo = p.tenNguoiNhan ? `${p.tenNguoiNhan}<br><small style="color: var(--text-muted);">${p.sdtNhan || ''} - ${p.diaChiGiao || ''}</small>` : '---';
+
+                return `
+                    <tr>
+                        <td><strong style="color: var(--primary-blue);">${p.maKien}</strong></td>
+                        <td>${p.maDh || '---'}</td>
+                        <td>${p.khoiLuong || 0} kg</td>
+                        <td>${receiverInfo}</td>
+                        <td>${codFormatted}</td>
+                        <td>${badge}</td>
+                        <td>${tgQuet}</td>
+                        <td>${p.ghiChu || '---'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         async function viewTripDetail(maChuyen) {
             document.getElementById('tripDetailTitle').innerText = `Chi tiết kiện hàng thuộc chuyến ${maChuyen}`;
             const tbody = document.getElementById('tripDetailBody');
             tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">Đang tải chi tiết...</td></tr>`;
+            document.getElementById('tripDetailPagination').innerHTML = '';
             openModal('tripDetailModal');
 
             try {
                 const res = await UteApi.getTripPackages(maChuyen);
                 if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                    tbody.innerHTML = res.data.map(p => {
-                        const tgQuet = p.thoiGianQuet ? new Date(p.thoiGianQuet).toLocaleString('vi-VN') : '---';
-                        const badge = getStatusBadge(p.trangThai);
-                        const codFormatted = (p.cod || 0).toLocaleString('vi-VN') + ' đ';
-                        const receiverInfo = p.tenNguoiNhan ? `${p.tenNguoiNhan}<br><small style="color: var(--text-muted);">${p.sdtNhan || ''} - ${p.diaChiGiao || ''}</small>` : '---';
-
-                        return `
-                            <tr>
-                                <td><strong style="color: var(--primary-blue);">${p.maKien}</strong></td>
-                                <td>${p.maDh || '---'}</td>
-                                <td>${p.khoiLuong || 0} kg</td>
-                                <td>${receiverInfo}</td>
-                                <td>${codFormatted}</td>
-                                <td>${badge}</td>
-                                <td>${tgQuet}</td>
-                                <td>${p.ghiChu || '---'}</td>
-                            </tr>
-                        `;
-                    }).join('');
+                    currentTripPkgsList = res.data;
+                    tripDetailPagination.reset();
+                    renderTripDetailTable();
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có kiện nào được gán vào chuyến này.</td></tr>`;
+                    currentTripPkgsList = [];
+                    renderTripDetailTable();
                 }
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 16px;">Lỗi tải chi tiết: ${err.message}</td></tr>`;
+                document.getElementById('tripDetailPagination').innerHTML = '';
             }
         }
 

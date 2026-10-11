@@ -313,6 +313,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="paginationTab1"></div>
                     </div>
 
                     <!-- PANE 2: CHUYẾN ĐANG CHẠY (STT 2) -->
@@ -346,6 +347,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="paginationTab2"></div>
                     </div>
 
                     <!-- PANE 3: TÀI XẾ KHẢ DỤNG (STT 3) -->
@@ -377,6 +379,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="paginationTab3"></div>
                     </div>
 
                     <!-- PANE 4: XE KHẢ DỤNG (STT 4) -->
@@ -408,6 +411,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div id="paginationTab4"></div>
                     </div>
                 </div>
             </div>
@@ -436,11 +440,12 @@
                         <tbody id="modalKienTableBody">
                             <tr>
                                 <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 16px;">
-                                    Đang tải...</td>
+                                     Đang tải...</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+                <div id="paginationModalKien"></div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('modalKienChuyen')">Đóng</button>
@@ -457,6 +462,48 @@
         let runningTripsData = [];
         let availableDriversData = [];
         let availableVehiclesData = [];
+
+        let currentPendingFiltered = [];
+        let currentRunningFiltered = [];
+        let currentDriversFiltered = [];
+        let currentVehiclesFiltered = [];
+        let currentModalKienList = [];
+
+        // PAGINATION INSTANCES (5, 10, 20 DÒNG/TRANG)
+        const paginationTab1 = new TablePagination({
+            containerId: 'paginationTab1',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderPendingPackages()
+        });
+
+        const paginationTab2 = new TablePagination({
+            containerId: 'paginationTab2',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderRunningTrips()
+        });
+
+        const paginationTab3 = new TablePagination({
+            containerId: 'paginationTab3',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderAvailableDrivers()
+        });
+
+        const paginationTab4 = new TablePagination({
+            containerId: 'paginationTab4',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderAvailableVehicles()
+        });
+
+        const paginationModalKien = new TablePagination({
+            containerId: 'paginationModalKien',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderModalKienTable()
+        });
 
         // LOAD DASHBOARD DATA
         async function loadDashboardData() {
@@ -482,41 +529,53 @@
                 // STT 1: Đơn cần điều phối
                 if (pRes.status === 'fulfilled' && pRes.value && pRes.value.success) {
                     pendingPackagesData = pRes.value.data || [];
+                    currentPendingFiltered = pendingPackagesData;
                     document.getElementById('statDonCanDieuPhoi').innerText = pendingPackagesData.length;
-                    renderPendingPackages(pendingPackagesData);
+                    paginationTab1.reset();
+                    renderPendingPackages();
                 } else {
                     document.getElementById('tbodyPendingPackages').innerHTML = `
                         <tr><td colspan="10" style="text-align:center; color: var(--text-muted); padding: 24px;">Không có kiện hàng nào cần điều phối.</td></tr>`;
+                    document.getElementById('paginationTab1').innerHTML = '';
                 }
 
                 // STT 2: Chuyến đang chạy
                 if (rRes.status === 'fulfilled' && rRes.value && rRes.value.success) {
                     runningTripsData = rRes.value.data || [];
+                    currentRunningFiltered = runningTripsData;
                     document.getElementById('statChuyenDangChay').innerText = runningTripsData.length;
-                    renderRunningTrips(runningTripsData);
+                    paginationTab2.reset();
+                    renderRunningTrips();
                 } else {
                     document.getElementById('tbodyRunningTrips').innerHTML = `
                         <tr><td colspan="9" style="text-align:center; color: var(--text-muted); padding: 24px;">Không có chuyến nào đang chạy.</td></tr>`;
+                    document.getElementById('paginationTab2').innerHTML = '';
                 }
 
                 // STT 3: Tài xế khả dụng
                 if (dRes.status === 'fulfilled' && dRes.value && dRes.value.success) {
                     availableDriversData = dRes.value.data || [];
+                    currentDriversFiltered = availableDriversData;
                     document.getElementById('statTaiXeKhaDung').innerText = availableDriversData.length;
-                    renderAvailableDrivers(availableDriversData);
+                    paginationTab3.reset();
+                    renderAvailableDrivers();
                 } else {
                     document.getElementById('tbodyAvailableDrivers').innerHTML = `
                         <tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 24px;">Không tìm thấy dữ liệu tài xế khả dụng.</td></tr>`;
+                    document.getElementById('paginationTab3').innerHTML = '';
                 }
 
                 // STT 4: Xe khả dụng
                 if (vRes.status === 'fulfilled' && vRes.value && vRes.value.success) {
                     availableVehiclesData = vRes.value.data || [];
+                    currentVehiclesFiltered = availableVehiclesData;
                     document.getElementById('statXeKhaDung').innerText = availableVehiclesData.length;
-                    renderAvailableVehicles(availableVehiclesData);
+                    paginationTab4.reset();
+                    renderAvailableVehicles();
                 } else {
                     document.getElementById('tbodyAvailableVehicles').innerHTML = `
                         <tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 24px;">Không tìm thấy phương tiện khả dụng.</td></tr>`;
+                    document.getElementById('paginationTab4').innerHTML = '';
                 }
 
                 // Cập nhật nhãn và số lượng cho mục chi tiết hiện tại
@@ -538,7 +597,7 @@
                 if (titleEl) titleEl.innerHTML = '📦 Đơn cần điều phối';
                 if (badgeEl) {
                     badgeEl.className = 'badge badge-primary';
-                    badgeEl.innerText = `${pendingPackagesData.length} đơn/kiện`;
+                    badgeEl.innerText = `${currentPendingFiltered.length} đơn/kiện`;
                 }
                 if (actBtn) {
                     actBtn.innerText = '🚀 Tạo chuyến & Gán đơn';
@@ -548,7 +607,7 @@
                 if (titleEl) titleEl.innerHTML = '🚚 Chuyến đang chạy';
                 if (badgeEl) {
                     badgeEl.className = 'badge badge-info';
-                    badgeEl.innerText = `${runningTripsData.length} chuyến`;
+                    badgeEl.innerText = `${currentRunningFiltered.length} chuyến`;
                 }
                 if (actBtn) {
                     actBtn.innerText = '🗺️ Quản lý & Lập chuyến mới';
@@ -558,7 +617,7 @@
                 if (titleEl) titleEl.innerHTML = '👨‍✈️ Tài xế khả dụng';
                 if (badgeEl) {
                     badgeEl.className = 'badge badge-success';
-                    badgeEl.innerText = `${availableDriversData.length} tài xế`;
+                    badgeEl.innerText = `${currentDriversFiltered.length} tài xế`;
                 }
                 if (actBtn) {
                     actBtn.innerText = '📋 Phân công chuyến';
@@ -568,7 +627,7 @@
                 if (titleEl) titleEl.innerHTML = '🚛 Xe khả dụng';
                 if (badgeEl) {
                     badgeEl.className = 'badge badge-warning';
-                    badgeEl.innerText = `${availableVehiclesData.length} xe`;
+                    badgeEl.innerText = `${currentVehiclesFiltered.length} xe`;
                 }
                 if (actBtn) {
                     actBtn.innerText = '🚛 Điều động phương tiện';
@@ -609,14 +668,17 @@
         }
 
         // RENDER STT 1: ĐƠN CẦN ĐIỀU PHỐI (Bỏ cột Thu hộ COD và Trạng thái)
-        function renderPendingPackages(list) {
+        function renderPendingPackages() {
             const tbody = document.getElementById('tbodyPendingPackages');
-            if (!list || list.length === 0) {
+            if (!currentPendingFiltered || currentPendingFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding: 24px;">Không có kiện hàng nào đang chờ điều phối.</td></tr>`;
+                document.getElementById('paginationTab1').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = list.map(item => {
+            const pagedList = paginationTab1.paginate(currentPendingFiltered);
+
+            tbody.innerHTML = pagedList.map(item => {
                 const isSameWh = (item.maKhoHienTai && item.maKhoNhan && item.maKhoHienTai === item.maKhoNhan);
                 const suggestedRoute = isSameWh 
                     ? `<span class="badge badge-success" style="font-size: 10.5px; padding: 2px 6px;">🚚 Đề xuất: Giao cuối</span>`
@@ -648,14 +710,17 @@
         }
 
         // RENDER STT 2: CHUYẾN ĐANG CHẠY
-        function renderRunningTrips(list) {
+        function renderRunningTrips() {
             const tbody = document.getElementById('tbodyRunningTrips');
-            if (!list || list.length === 0) {
+            if (!currentRunningFiltered || currentRunningFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color: var(--text-muted); padding: 24px;">Hiện không có chuyến giao nào đang di chuyển trên đường.</td></tr>`;
+                document.getElementById('paginationTab2').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = list.map(t => {
+            const pagedList = paginationTab2.paginate(currentRunningFiltered);
+
+            tbody.innerHTML = pagedList.map(t => {
                 const routeName = t.loaiChuyen === 'LIEN_KHO'
                     ? `${t.tenKhoXuatPhat || 'Kho xuất phát'} ➔ ${t.tenDiemDen || 'Kho đích'}`
                     : `Giao cuối: ${t.tenKhoXuatPhat || 'Kho'} ➔ Địa chỉ khách`;
@@ -687,14 +752,17 @@
         }
 
         // RENDER STT 3: TÀI XẾ KHẢ DỤNG
-        function renderAvailableDrivers(list) {
+        function renderAvailableDrivers() {
             const tbody = document.getElementById('tbodyAvailableDrivers');
-            if (!list || list.length === 0) {
+            if (!currentDriversFiltered || currentDriversFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 24px;">Không có tài xế nào sẵn sàng.</td></tr>`;
+                document.getElementById('paginationTab3').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = list.map(d => {
+            const pagedList = paginationTab3.paginate(currentDriversFiltered);
+
+            tbody.innerHTML = pagedList.map(d => {
                 const isReady = !d.chuyenHienTai;
                 const badgeStatus = isReady
                     ? `<span class="badge badge-success">Sẵn sàng</span>`
@@ -723,14 +791,17 @@
         }
 
         // RENDER STT 4: XE KHẢ DỤNG
-        function renderAvailableVehicles(list) {
+        function renderAvailableVehicles() {
             const tbody = document.getElementById('tbodyAvailableVehicles');
-            if (!list || list.length === 0) {
+            if (!currentVehiclesFiltered || currentVehiclesFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding: 24px;">Không có phương tiện nào khả dụng.</td></tr>`;
+                document.getElementById('paginationTab4').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = list.map(v => {
+            const pagedList = paginationTab4.paginate(currentVehiclesFiltered);
+
+            tbody.innerHTML = pagedList.map(v => {
                 const taiTrongFormatted = v.taiTrong ? Number(v.taiTrong).toLocaleString('vi-VN') + ' kg' : '---';
                 return `
                     <tr>
@@ -752,36 +823,54 @@
             }).join('');
         }
 
+        // RENDER MODAL KIỆN TRÊN CHUYẾN
+        function renderModalKienTable() {
+            const tbody = document.getElementById('modalKienTableBody');
+            if (!currentModalKienList || currentModalKienList.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có kiện nào được gán vào chuyến này.</td></tr>`;
+                document.getElementById('paginationModalKien').innerHTML = '';
+                return;
+            }
+
+            const paged = paginationModalKien.paginate(currentModalKienList);
+            tbody.innerHTML = paged.map(p => {
+                const tgGan = p.thoiGianGan ? new Date(p.thoiGianGan).toLocaleString('vi-VN') : '---';
+                const tgQuet = p.thoiGianQuet ? new Date(p.thoiGianQuet).toLocaleString('vi-VN') : '---';
+                const badge = getStatusBadge(p.trangThai);
+                const kienCode = p.maKien || (p.id ? p.id.maKien : '---');
+                return `
+                    <tr>
+                        <td><strong style="color: var(--primary-blue);">${kienCode}</strong></td>
+                        <td>${tgGan}</td>
+                        <td>${tgQuet}</td>
+                        <td>${badge}</td>
+                        <td>${p.ghiChu || '---'}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         // MODAL XEM KIỆN TRÊN CHUYẾN
         async function viewTripPackages(maChuyen) {
             document.getElementById('modalKienChuyenTitle').innerText = `Tình trạng kiện hàng trên chuyến ${maChuyen}`;
             const tbody = document.getElementById('modalKienTableBody');
             tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 16px;">Đang tải...</td></tr>`;
+            document.getElementById('paginationModalKien').innerHTML = '';
             openModal('modalKienChuyen');
 
             try {
                 const res = await UteApi.getTripPackages(maChuyen);
                 if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                    tbody.innerHTML = res.data.map(p => {
-                        const tgGan = p.thoiGianGan ? new Date(p.thoiGianGan).toLocaleString('vi-VN') : '---';
-                        const tgQuet = p.thoiGianQuet ? new Date(p.thoiGianQuet).toLocaleString('vi-VN') : '---';
-                        const badge = getStatusBadge(p.trangThai);
-                        const kienCode = p.maKien || (p.id ? p.id.maKien : '---');
-                        return `
-                            <tr>
-                                <td><strong style="color: var(--primary-blue);">${kienCode}</strong></td>
-                                <td>${tgGan}</td>
-                                <td>${tgQuet}</td>
-                                <td>${badge}</td>
-                                <td>${p.ghiChu || '---'}</td>
-                            </tr>
-                        `;
-                    }).join('');
+                    currentModalKienList = res.data;
+                    paginationModalKien.reset();
+                    renderModalKienTable();
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 16px;">Chưa có kiện nào được gán vào chuyến này.</td></tr>`;
+                    currentModalKienList = [];
+                    renderModalKienTable();
                 }
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 16px;">Lỗi tải chi tiết: ${e.message}</td></tr>`;
+                document.getElementById('paginationModalKien').innerHTML = '';
             }
         }
 
@@ -790,43 +879,63 @@
             const q = (query || '').toLowerCase().trim();
 
             if (currentTab === 1) {
-                if (!q) { renderPendingPackages(pendingPackagesData); return; }
-                const filtered = pendingPackagesData.filter(item =>
-                    (item.maKien && item.maKien.toLowerCase().includes(q)) ||
-                    (item.maDh && item.maDh.toLowerCase().includes(q)) ||
-                    (item.loaiHang && item.loaiHang.toLowerCase().includes(q)) ||
-                    (item.tenKhoHienTai && item.tenKhoHienTai.toLowerCase().includes(q)) ||
-                    (item.tenNguoiNhan && item.tenNguoiNhan.toLowerCase().includes(q)) ||
-                    (item.sdtNhan && item.sdtNhan.includes(q))
-                );
-                renderPendingPackages(filtered);
+                if (!q) {
+                    currentPendingFiltered = pendingPackagesData;
+                } else {
+                    currentPendingFiltered = pendingPackagesData.filter(item =>
+                        (item.maKien && item.maKien.toLowerCase().includes(q)) ||
+                        (item.maDh && item.maDh.toLowerCase().includes(q)) ||
+                        (item.loaiHang && item.loaiHang.toLowerCase().includes(q)) ||
+                        (item.tenKhoHienTai && item.tenKhoHienTai.toLowerCase().includes(q)) ||
+                        (item.tenNguoiNhan && item.tenNguoiNhan.toLowerCase().includes(q)) ||
+                        (item.sdtNhan && item.sdtNhan.includes(q))
+                    );
+                }
+                paginationTab1.reset();
+                renderPendingPackages();
+                updateHeaderInfo(1);
             } else if (currentTab === 2) {
-                if (!q) { renderRunningTrips(runningTripsData); return; }
-                const filtered = runningTripsData.filter(t =>
-                    (t.maChuyen && t.maChuyen.toLowerCase().includes(q)) ||
-                    (t.tenTaiXe && t.tenTaiXe.toLowerCase().includes(q)) ||
-                    (t.bienSo && t.bienSo.toLowerCase().includes(q)) ||
-                    (t.tenKhoXuatPhat && t.tenKhoXuatPhat.toLowerCase().includes(q)) ||
-                    (t.tenDiemDen && t.tenDiemDen.toLowerCase().includes(q))
-                );
-                renderRunningTrips(filtered);
+                if (!q) {
+                    currentRunningFiltered = runningTripsData;
+                } else {
+                    currentRunningFiltered = runningTripsData.filter(t =>
+                        (t.maChuyen && t.maChuyen.toLowerCase().includes(q)) ||
+                        (t.tenTaiXe && t.tenTaiXe.toLowerCase().includes(q)) ||
+                        (t.bienSo && t.bienSo.toLowerCase().includes(q)) ||
+                        (t.tenKhoXuatPhat && t.tenKhoXuatPhat.toLowerCase().includes(q)) ||
+                        (t.tenDiemDen && t.tenDiemDen.toLowerCase().includes(q))
+                    );
+                }
+                paginationTab2.reset();
+                renderRunningTrips();
+                updateHeaderInfo(2);
             } else if (currentTab === 3) {
-                if (!q) { renderAvailableDrivers(availableDriversData); return; }
-                const filtered = availableDriversData.filter(d =>
-                    (d.maTx && d.maTx.toLowerCase().includes(q)) ||
-                    (d.hoTen && d.hoTen.toLowerCase().includes(q)) ||
-                    (d.sdt && d.sdt.includes(q)) ||
-                    (d.bangLai && d.bangLai.toLowerCase().includes(q))
-                );
-                renderAvailableDrivers(filtered);
+                if (!q) {
+                    currentDriversFiltered = availableDriversData;
+                } else {
+                    currentDriversFiltered = availableDriversData.filter(d =>
+                        (d.maTx && d.maTx.toLowerCase().includes(q)) ||
+                        (d.hoTen && d.hoTen.toLowerCase().includes(q)) ||
+                        (d.sdt && d.sdt.includes(q)) ||
+                        (d.bangLai && d.bangLai.toLowerCase().includes(q))
+                    );
+                }
+                paginationTab3.reset();
+                renderAvailableDrivers();
+                updateHeaderInfo(3);
             } else if (currentTab === 4) {
-                if (!q) { renderAvailableVehicles(availableVehiclesData); return; }
-                const filtered = availableVehiclesData.filter(v =>
-                    (v.maPt && v.maPt.toLowerCase().includes(q)) ||
-                    (v.bienSo && v.bienSo.toLowerCase().includes(q)) ||
-                    (v.loaiXe && v.loaiXe.toLowerCase().includes(q))
-                );
-                renderAvailableVehicles(filtered);
+                if (!q) {
+                    currentVehiclesFiltered = availableVehiclesData;
+                } else {
+                    currentVehiclesFiltered = availableVehiclesData.filter(v =>
+                        (v.maPt && v.maPt.toLowerCase().includes(q)) ||
+                        (v.bienSo && v.bienSo.toLowerCase().includes(q)) ||
+                        (v.loaiXe && v.loaiXe.toLowerCase().includes(q))
+                    );
+                }
+                paginationTab4.reset();
+                renderAvailableVehicles();
+                updateHeaderInfo(4);
             }
         }
 

@@ -92,6 +92,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="routePagination"></div>
                 </div>
             </div>
         </main>
@@ -143,10 +144,18 @@
     <script src="../../static/js/components.js"></script>
     <script>
         let allRoutes = [];
+        let currentRoutesFiltered = [];
         let allWarehouses = [];
         let warehouseMap = {};
         let isEditing = false;
         let editingRouteCode = '';
+
+        const routePagination = new TablePagination({
+            containerId: 'routePagination',
+            defaultPageSize: 5,
+            pageSizeOptions: [5, 10, 20],
+            onChange: () => renderRoutes()
+        });
 
         async function initPage() {
             await loadWarehouses();
@@ -193,9 +202,13 @@
                 const res = await UteApi.getRoutes();
                 if (res && res.success && Array.isArray(res.data)) {
                     allRoutes = res.data;
-                    renderRoutes(allRoutes);
+                    currentRoutesFiltered = allRoutes;
+                    routePagination.reset();
+                    renderRoutes();
                 } else {
+                    currentRoutesFiltered = [];
                     tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Chưa có tuyến vận chuyển nào.</td></tr>`;
+                    document.getElementById('routePagination').innerHTML = '';
                 }
             } catch (err) {
                 console.error('Lỗi tải tuyến:', err);
@@ -204,17 +217,21 @@
                         ⚠️ Không thể tải danh sách tuyến từ máy chủ (${err.message}).
                     </td></tr>
                 `;
+                document.getElementById('routePagination').innerHTML = '';
             }
         }
 
-        function renderRoutes(routes) {
+        function renderRoutes() {
             const tbody = document.getElementById('routeTableBody');
-            if (!routes || routes.length === 0) {
+            if (!currentRoutesFiltered || currentRoutesFiltered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 24px;">Không tìm thấy tuyến phù hợp.</td></tr>`;
+                document.getElementById('routePagination').innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = routes.map(r => {
+            const paged = routePagination.paginate(currentRoutesFiltered);
+
+            tbody.innerHTML = paged.map(r => {
                 const tenDi = warehouseMap[r.maKhoDi] || r.maKhoDi;
                 const tenDen = warehouseMap[r.maKhoDen] || r.maKhoDen;
                 const dist = r.khoangCach != null ? `${r.khoangCach} km` : '---';
@@ -238,19 +255,20 @@
 
         function filterRoutes(query) {
             if (!query) {
-                renderRoutes(allRoutes);
-                return;
+                currentRoutesFiltered = allRoutes;
+            } else {
+                const q = query.toLowerCase().trim();
+                currentRoutesFiltered = allRoutes.filter(r => {
+                    const tenDi = (warehouseMap[r.maKhoDi] || '').toLowerCase();
+                    const tenDen = (warehouseMap[r.maKhoDen] || '').toLowerCase();
+                    return (r.maTuyen && r.maTuyen.toLowerCase().includes(q)) ||
+                           (r.maKhoDi && r.maKhoDi.toLowerCase().includes(q)) ||
+                           (r.maKhoDen && r.maKhoDen.toLowerCase().includes(q)) ||
+                           tenDi.includes(q) || tenDen.includes(q);
+                });
             }
-            const q = query.toLowerCase().trim();
-            const filtered = allRoutes.filter(r => {
-                const tenDi = (warehouseMap[r.maKhoDi] || '').toLowerCase();
-                const tenDen = (warehouseMap[r.maKhoDen] || '').toLowerCase();
-                return (r.maTuyen && r.maTuyen.toLowerCase().includes(q)) ||
-                       (r.maKhoDi && r.maKhoDi.toLowerCase().includes(q)) ||
-                       (r.maKhoDen && r.maKhoDen.toLowerCase().includes(q)) ||
-                       tenDi.includes(q) || tenDen.includes(q);
-            });
-            renderRoutes(filtered);
+            routePagination.reset();
+            renderRoutes();
         }
 
         function openCreateModal() {
