@@ -450,7 +450,7 @@
         let currentSlide = 0;
         const totalSlides = 2;
         let slideTimer = null;
-        const SLIDE_INTERVAL = 3500; // 3.5 giây tự động đổi ảnh
+        const SLIDE_INTERVAL = 5000; // Chu kỳ 5 giây tự động đổi ảnh
 
         function updateSliderUI() {
             const track = document.getElementById('heroSliderTrack');
@@ -501,11 +501,13 @@
                 slider.addEventListener('mouseenter', () => {
                     if (slideTimer) clearInterval(slideTimer);
                     if (hoverResumeTimeout) clearTimeout(hoverResumeTimeout);
+                    // Sau tối đa 15 giây rê chuột, tự động kích hoạt lại chu kỳ trượt ảnh
                     hoverResumeTimeout = setTimeout(() => {
                         startSlideTimer();
-                    }, 5000);
+                    }, 15000);
                 });
                 slider.addEventListener('mouseleave', () => {
+                    // Ngay khi rời chuột, kích hoạt lại ngay chu kỳ trượt ảnh
                     if (hoverResumeTimeout) clearTimeout(hoverResumeTimeout);
                     startSlideTimer();
                 });
