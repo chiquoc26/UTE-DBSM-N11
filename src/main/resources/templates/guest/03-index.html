@@ -450,6 +450,7 @@
         let currentSlide = 0;
         const totalSlides = 2;
         let slideTimer = null;
+        const SLIDE_INTERVAL = 3500; // 3.5 giây tự động đổi ảnh
 
         function updateSliderUI() {
             const track = document.getElementById('heroSliderTrack');
@@ -461,16 +462,16 @@
             });
         }
 
-        function nextHeroSlide() {
+        function nextHeroSlide(manual = true) {
             currentSlide = (currentSlide + 1) % totalSlides;
             updateSliderUI();
-            restartSlideTimer();
+            if (manual) restartSlideTimer();
         }
 
-        function prevHeroSlide() {
+        function prevHeroSlide(manual = true) {
             currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
             updateSliderUI();
-            restartSlideTimer();
+            if (manual) restartSlideTimer();
         }
 
         function jumpToHeroSlide(index) {
@@ -482,23 +483,41 @@
         function startSlideTimer() {
             if (slideTimer) clearInterval(slideTimer);
             slideTimer = setInterval(() => {
-                currentSlide = (currentSlide + 1) % totalSlides;
-                updateSliderUI();
-            }, 4500);
+                nextHeroSlide(false);
+            }, SLIDE_INTERVAL);
         }
 
         function restartSlideTimer() {
             startSlideTimer();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        function initHeroSlider() {
+            updateSliderUI();
             startSlideTimer();
+
             const slider = document.getElementById('heroSliderSection');
             if (slider) {
-                slider.addEventListener('mouseenter', () => { if (slideTimer) clearInterval(slideTimer); });
-                slider.addEventListener('mouseleave', () => { startSlideTimer(); });
+                let hoverResumeTimeout = null;
+                slider.addEventListener('mouseenter', () => {
+                    if (slideTimer) clearInterval(slideTimer);
+                    if (hoverResumeTimeout) clearTimeout(hoverResumeTimeout);
+                    hoverResumeTimeout = setTimeout(() => {
+                        startSlideTimer();
+                    }, 5000);
+                });
+                slider.addEventListener('mouseleave', () => {
+                    if (hoverResumeTimeout) clearTimeout(hoverResumeTimeout);
+                    startSlideTimer();
+                });
             }
-        });
+        }
+
+        // Tự động khởi chạy ngay lập tức cả khi DOMContentLoaded đã kích hoạt
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHeroSlider);
+        } else {
+            initHeroSlider();
+        }
 
         function fillTrackingCode(code) {
             document.getElementById('quickTrackingCode').value = code;
