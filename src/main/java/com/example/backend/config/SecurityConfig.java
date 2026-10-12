@@ -62,7 +62,7 @@ public class SecurityConfig {
             // Phân quyền Endpoints
             .authorizeHttpRequests(auth -> auth
                 // Static Assets (CSS, JS, Images, Favicon, Error)
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
                 
                 // HTML Web View Pages (Rendered by Thymeleaf Views)
                 .requestMatchers(
