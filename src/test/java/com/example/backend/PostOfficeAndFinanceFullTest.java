@@ -234,7 +234,7 @@ class PostOfficeAndFinanceFullTest {
         req.setDiaChiLay("123 Lê Duẩn, Hà Nội");
         req.setDiaChiGiao("456 Nguyễn Huệ, TP.HCM");
         req.setMaKhoGui("KHO01");
-        req.setMaKhoNhan("KHO02");
+        req.setMaKhoNhan("KHO03");
         req.setCod(new BigDecimal("100000"));
         req.setPhuongThucThanhToan("CHUYEN_KHOAN");
 
@@ -279,7 +279,7 @@ class PostOfficeAndFinanceFullTest {
         req.setDiaChiLay("78 Võ Văn Tần, Q3, TP.HCM");
         req.setDiaChiGiao("12 Bạch Đằng, Đà Nẵng");
         req.setMaKhoGui("KHO01");
-        req.setMaKhoNhan("KHO02");
+        req.setMaKhoNhan("KHO03");
         req.setCod(new BigDecimal("500000"));
         req.setPhuongThucThanhToan("TIEN_MAT");
 
