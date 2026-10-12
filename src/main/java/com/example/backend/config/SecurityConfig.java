@@ -65,10 +65,15 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
                 
                 // HTML Web View Pages (Rendered by Thymeleaf Views)
-                .requestMatchers("/", "/login", "/register", "/tracking", "/customer/**", "/post-office/**", "/admin/**").permitAll()
+                .requestMatchers(
+                    "/", "/login", "/register", "/tracking",
+                    "/customer/**", "/post-office/**", "/admin/**",
+                    "/dispatcher/**", "/driver/**", "/design-system"
+                ).permitAll()
 
-                // Public REST APIs
+                // Public REST APIs & Logistics APIs
                 .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/dieu-phoi/**", "/api/tai-xe/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tra-cuu/**").permitAll()
 
                 // Dispatcher Types cho Thymeleaf Views internal forwarding

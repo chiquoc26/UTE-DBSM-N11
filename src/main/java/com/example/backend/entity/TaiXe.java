@@ -8,7 +8,11 @@ import lombok.*;
  */
 @Entity
 @Table(name = "tai_xe")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TaiXe {
 
     @Id
@@ -27,4 +31,8 @@ public class TaiXe {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ma_nd", unique = true)
     private NguoiDung nguoiDung;
+
+    public String getMaNd() {
+        return nguoiDung != null ? nguoiDung.getMaNd() : null;
+    }
 }

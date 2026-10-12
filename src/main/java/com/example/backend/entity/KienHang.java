@@ -62,6 +62,14 @@ public class KienHang {
     @Schema(description = "Kho / Bưu cục hiện tại đang lưu giữ kiện hàng")
     private Kho khoHienTai;
 
+    public String getMaDh() {
+        return donHang != null ? donHang.getMaDh() : null;
+    }
+
+    public String getMaKhoHienTai() {
+        return khoHienTai != null ? khoHienTai.getMaKho() : null;
+    }
+
     @Transient
     @Schema(description = "Kích thước dạng Dài x Rộng x Cao (cm)", example = "30x20x15")
     private String kichThuoc;
