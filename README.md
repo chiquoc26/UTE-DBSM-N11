@@ -15,9 +15,9 @@
 | **1** | **Quản trị viên** | `ADMIN` | `admin` | `123456` | Quản trị viên hệ thống | Ban Quản trị UTE Express | `/admin/dashboard` |
 | **2** | **Nhân viên Bưu cục** | `NVBC` | `nvbc01` | `123456` | Phạm Hoàng Nam | Bưu cục Thủ Đức (`KHO01`) | `/post-office/dashboard` |
 | **3** | **Nhân viên Bưu cục** | `NVBC` | `nvbc02` | `123456` | Võ Thị Lan | Bưu cục Đà Nẵng (`KHO03`) | `/post-office/dashboard` |
-| **4** | **Nhân viên Điều phối** | `NVDP` | `nvdp01` | `123456` | Đặng Quốc Huy | Trung tâm Điều phối (`KHO01`) | `/dispatcher/12-dashboard.html` |
-| **5** | **Tài xế Giao nhận** | `TAI_XE` | `tx01` | `123456` | Huỳnh Văn Tài | Bằng lái hạng C - Xe tải | `/driver/15-dashboard.html` |
-| **6** | **Tài xế Giao nhận** | `TAI_XE` | `tx02` | `123456` | Ngô Minh Đức | Bằng lái hạng E - Xe tải lớn | `/driver/15-dashboard.html` |
+| **4** | **Nhân viên Điều phối** | `NVDP` | `nvdp01` | `123456` | Đặng Quốc Huy | Trung tâm Điều phối (`KHO01`) | `/dispatcher/dashboard` |
+| **5** | **Tài xế Giao nhận** | `TAI_XE` | `tx01` | `123456` | Huỳnh Văn Tài | Bằng lái hạng C - Xe tải | `/driver/dashboard` |
+| **6** | **Tài xế Giao nhận** | `TAI_XE` | `tx02` | `123456` | Ngô Minh Đức | Bằng lái hạng E - Xe tải lớn | `/driver/dashboard` |
 | **7** | **Khách hàng** | `KHACH_HANG` | `0901000001` | `123456` | Nguyễn Văn An | Khách hàng cá nhân (TP.HCM) | `/customer/dashboard` |
 | **8** | **Khách hàng** | `KHACH_HANG` | `0901000002` | `123456` | Trần Thị Bích | Khách hàng cá nhân (Hà Nội) | `/customer/dashboard` |
 

@@ -64,24 +64,19 @@ public class SecurityConfig {
                 // Static Assets (CSS, JS, Images, Favicon, Error)
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
                 
-                // HTML Web View Pages (Rendered by Thymeleaf Views)
-                .requestMatchers(
-                    "/", "/login", "/register", "/tracking",
-                    "/customer/**", "/post-office/**", "/admin/**",
-                    "/dispatcher/**", "/driver/**", "/design-system"
-                ).permitAll()
+                // Public Web Views
+                .requestMatchers("/", "/login", "/register", "/tracking", "/logout", "/design-system").permitAll()
 
                 // Public REST APIs
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tra-cuu/**").permitAll()
 
-                // Protected REST APIs (Secured by JWT Token & Roles)
-                .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasAuthority("ADMIN")
-                .requestMatchers("/api/v1/post-office/**").hasAnyAuthority("NVBC", "ADMIN")
-                .requestMatchers("/api/v1/payments/**").hasAnyAuthority("NVBC", "ADMIN")
-                .requestMatchers("/api/dieu-phoi/**").hasAnyAuthority("NVDP", "ADMIN")
-                .requestMatchers("/api/tai-xe/**").hasAnyAuthority("TAI_XE", "ADMIN")
-                .requestMatchers("/api/khach-hang/**", "/api/don-hang/**").hasAnyAuthority("KHACH_HANG", "ADMIN")
+                // Phân quyền chi tiết cho cả Giao diện (Views) và REST APIs theo từng Vai trò (Roles)
+                .requestMatchers("/admin/**", "/api/admin/**", "/api/v1/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/post-office/**", "/api/v1/post-office/**", "/api/v1/payments/**").hasAnyAuthority("NVBC", "ADMIN")
+                .requestMatchers("/dispatcher/**", "/api/dieu-phoi/**").hasAnyAuthority("NVDP", "ADMIN")
+                .requestMatchers("/driver/**", "/api/tai-xe/**").hasAnyAuthority("TAI_XE", "ADMIN")
+                .requestMatchers("/customer/**", "/api/khach-hang/**", "/api/don-hang/**").hasAnyAuthority("KHACH_HANG", "ADMIN")
 
                 // Dispatcher Types cho Thymeleaf Views internal forwarding
                 .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR).permitAll()
@@ -98,17 +93,27 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // Xử lý phản hồi JSON rõ ràng khi chưa xác thực hoặc không có quyền (thay vì trả về trống)
+            // Xử lý khi chưa xác thực hoặc không có quyền: Chuyển hướng /login nếu duyệt web, trả JSON nếu gọi API
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("{\"success\":false,\"message\":\"Chưa đăng nhập hoặc Token JWT không hợp lệ/hết hạn. Vui lòng đăng nhập (với tài khoản có vai trò phù hợp như KHACH_HANG) và gắn Token vào nút Authorize!\",\"status\":401}");
+                    String uri = request.getRequestURI();
+                    if (uri.startsWith("/api/")) {
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("{\"success\":false,\"message\":\"Chưa đăng nhập hoặc Token JWT không hợp lệ/hết hạn.\",\"status\":401}");
+                    } else {
+                        response.sendRedirect("/login");
+                    }
                 })
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
-                    response.setContentType("application/json;charset=UTF-8");
-                    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
-                    response.getWriter().write("{\"success\":false,\"message\":\"Tài khoản hiện tại không có quyền truy cập chức năng này (sai vai trò/role).\",\"status\":403}");
+                    String uri = request.getRequestURI();
+                    if (uri.startsWith("/api/")) {
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN);
+                        response.getWriter().write("{\"success\":false,\"message\":\"Tài khoản hiện tại không có quyền truy cập chức năng này (sai vai trò/role).\",\"status\":403}");
+                    } else {
+                        response.sendRedirect("/login?error=access_denied");
+                    }
                 })
             )
 

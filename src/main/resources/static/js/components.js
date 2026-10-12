@@ -276,4 +276,13 @@ class TablePagination {
     }
 }
 
+// Global Logout Helper
+function logout() {
+    localStorage.clear();
+    sessionStorage.clear();
+    document.cookie = 'accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax';
+    window.location.href = '/logout';
+}
+window.logout = logout;
+
 

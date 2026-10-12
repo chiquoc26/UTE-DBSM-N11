@@ -112,6 +112,9 @@
                     localStorage.setItem('vaiTro', resData.data.vaiTro);
                     localStorage.setItem('tenVaiTro', resData.data.tenVaiTro || '');
 
+                    // Lưu cookie để trình duyệt tự động gửi kèm khi truy cập trực tiếp các trang giao diện
+                    document.cookie = `accessToken=${resData.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;
+
                     setTimeout(() => {
                         const role = resData.data.vaiTro;
                         if (role === 'ADMIN') {
@@ -119,9 +122,9 @@
                         } else if (role === 'NVBC') {
                             window.location.href = '/post-office/dashboard';
                         } else if (role === 'NVDP') {
-                            window.location.href = '/dispatcher/12-dashboard.html';
+                            window.location.href = '/dispatcher/dashboard';
                         } else if (role === 'TAI_XE') {
-                            window.location.href = '/driver/15-dashboard.html';
+                            window.location.href = '/driver/dashboard';
                         } else {
                             window.location.href = '/customer/dashboard';
                         }
@@ -142,6 +145,18 @@
                 btnSubmit.innerText = 'Đăng nhập';
             }
         }
+
+        // Kiểm tra thông báo lỗi khi bị từ chối truy cập do sai quyền
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'access_denied') {
+                const alertBox = document.getElementById('loginAlert');
+                alertBox.style.display = 'block';
+                alertBox.style.backgroundColor = 'var(--danger-bg)';
+                alertBox.style.color = 'var(--danger)';
+                alertBox.innerText = 'Bạn không có quyền truy cập trang yêu cầu. Vui lòng đăng nhập với tài khoản có vai trò phù hợp!';
+            }
+        });
     </script>
 </body>
 </html>

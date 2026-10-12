@@ -23,6 +23,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Controller điều hướng giao diện Thymeleaf kết nối trực tiếp với cơ sở dữ liệu PostgreSQL.
  * Hỗ trợ đầy đủ dữ liệu thời gian thực cho:
@@ -33,7 +39,13 @@ import java.util.List;
 @Slf4j
 @Controller
 @RequiredArgsConstructor
-public class ViewController {
+public class ViewController implements WebMvcConfigurer {
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/static/**")
+                .addResourceLocations("classpath:/static/");
+    }
 
     private final DonHangRepository donHangRepository;
     private final KhoRepository khoRepository;
@@ -59,6 +71,17 @@ public class ViewController {
     @GetMapping("/register")
     public String register() {
         return "guest/01-register";
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("accessToken", "")
+                .path("/")
+                .maxAge(0)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return "redirect:/login";
     }
 
     @GetMapping("/tracking")
@@ -393,5 +416,41 @@ public class ViewController {
         model.addAttribute("tongKienLuuKho", tongKienLuuKho);
 
         return "admin/reports";
+    }
+
+    // =========================================================================
+    // 7. PHÂN HỆ ĐIỀU PHỐI (DISPATCHER)
+    // =========================================================================
+    @GetMapping({"/dispatcher/dashboard", "/dispatcher/12-dashboard.html"})
+    public String dispatcherDashboard() {
+        return "dispatcher/12-dashboard";
+    }
+
+    @GetMapping({"/dispatcher/routes", "/dispatcher/13-routes.html"})
+    public String dispatcherRoutes() {
+        return "dispatcher/13-routes";
+    }
+
+    @GetMapping({"/dispatcher/trips", "/dispatcher/14-trips.html"})
+    public String dispatcherTrips() {
+        return "dispatcher/14-trips";
+    }
+
+    // =========================================================================
+    // 8. PHÂN HỆ TÀI XẾ (DRIVER)
+    // =========================================================================
+    @GetMapping({"/driver/dashboard", "/driver/15-dashboard.html"})
+    public String driverDashboard() {
+        return "driver/15-dashboard";
+    }
+
+    @GetMapping({"/driver/trip-detail", "/driver/16-trip-detail.html"})
+    public String driverTripDetail() {
+        return "driver/16-trip-detail";
+    }
+
+    @GetMapping({"/driver/delivery-update", "/driver/17-delivery-update.html"})
+    public String driverDeliveryUpdate() {
+        return "driver/17-delivery-update";
     }
 }

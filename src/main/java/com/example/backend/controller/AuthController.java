@@ -31,9 +31,31 @@ public class AuthController {
     @Operation(summary = "Đăng nhập", description = "Nhận username + password, trả về JWT Token")
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(
-            @Valid @RequestBody LoginRequest request) {
+            @Valid @RequestBody LoginRequest request,
+            jakarta.servlet.http.HttpServletResponse httpServletResponse) {
         LoginResponse resp = authService.login(request);
+        ResponseCookie cookie = ResponseCookie.from("accessToken", resp.getAccessToken())
+                .path("/")
+                .maxAge(86400)
+                .httpOnly(false)
+                .sameSite("Lax")
+                .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(ApiResponse.success("Đăng nhập thành công", resp));
+    }
+
+    @Operation(summary = "Đăng xuất", description = "Xóa cookie xác thực accessToken")
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            jakarta.servlet.http.HttpServletResponse httpServletResponse) {
+        ResponseCookie cookie = ResponseCookie.from("accessToken", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(false)
+                .sameSite("Lax")
+                .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok(ApiResponse.success("Đăng xuất thành công", null));
     }
 
     // ---- UC01 Step 1: Gửi OTP đăng ký ----
