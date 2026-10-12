@@ -106,13 +106,22 @@
 
                     // Save token and user info
                     localStorage.setItem('accessToken', resData.data.accessToken);
+                    localStorage.setItem('token', resData.data.accessToken);
                     localStorage.setItem('maNd', resData.data.maNd);
                     localStorage.setItem('tenDangNhap', resData.data.tenDangNhap);
                     localStorage.setItem('vaiTro', resData.data.vaiTro);
+                    localStorage.setItem('tenVaiTro', resData.data.tenVaiTro || '');
 
                     setTimeout(() => {
-                        if (resData.data.vaiTro === 'ADMIN') {
-                            window.location.href = '/admin/users';
+                        const role = resData.data.vaiTro;
+                        if (role === 'ADMIN') {
+                            window.location.href = '/admin/dashboard';
+                        } else if (role === 'NVBC') {
+                            window.location.href = '/post-office/dashboard';
+                        } else if (role === 'NVDP') {
+                            window.location.href = '/dispatcher/12-dashboard.html';
+                        } else if (role === 'TAI_XE') {
+                            window.location.href = '/driver/15-dashboard.html';
                         } else {
                             window.location.href = '/customer/dashboard';
                         }

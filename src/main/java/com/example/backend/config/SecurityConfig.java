@@ -71,10 +71,17 @@ public class SecurityConfig {
                     "/dispatcher/**", "/driver/**", "/design-system"
                 ).permitAll()
 
-                // Public REST APIs & Logistics APIs
+                // Public REST APIs
                 .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/dieu-phoi/**", "/api/tai-xe/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/tra-cuu/**").permitAll()
+
+                // Protected REST APIs (Secured by JWT Token & Roles)
+                .requestMatchers("/api/admin/**", "/api/v1/admin/**").hasAuthority("ADMIN")
+                .requestMatchers("/api/v1/post-office/**").hasAnyAuthority("NVBC", "ADMIN")
+                .requestMatchers("/api/v1/payments/**").hasAnyAuthority("NVBC", "ADMIN")
+                .requestMatchers("/api/dieu-phoi/**").hasAnyAuthority("NVDP", "ADMIN")
+                .requestMatchers("/api/tai-xe/**").hasAnyAuthority("TAI_XE", "ADMIN")
+                .requestMatchers("/api/khach-hang/**", "/api/don-hang/**").hasAnyAuthority("KHACH_HANG", "ADMIN")
 
                 // Dispatcher Types cho Thymeleaf Views internal forwarding
                 .dispatcherTypeMatchers(jakarta.servlet.DispatcherType.FORWARD, jakarta.servlet.DispatcherType.ERROR).permitAll()
@@ -86,11 +93,6 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/v3/api-docs"
                 ).permitAll()
-
-                // Protected REST APIs (Secured by JWT Token)
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
-                .requestMatchers("/api/khach-hang/**").hasAuthority("KHACH_HANG")
-                .requestMatchers(HttpMethod.POST, "/api/don-hang").hasAuthority("KHACH_HANG")
 
                 // All other endpoints require authentication
                 .anyRequest().authenticated()

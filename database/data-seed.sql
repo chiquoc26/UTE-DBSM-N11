@@ -65,9 +65,9 @@ ON CONFLICT (ma_tuyen) DO NOTHING;
 
 -- 6. TÀI KHOẢN NGƯỜI DÙNG PHỤC VỤ TEST
 INSERT INTO nguoi_dung (ma_nd, ten_dang_nhap, mat_khau, ma_vai_tro, trang_thai) VALUES
-('ND001', 'admin',  '$2a$10$7EqJtq98hPqEX7fNZaFWoOHi0qM5B.pU/4GZ3Y41N7F/2kQc5Xl6K', 'ADMIN',      'Hoạt động'),
-('ND002', 'nvbc01', '$2a$10$7EqJtq98hPqEX7fNZaFWoOHi0qM5B.pU/4GZ3Y41N7F/2kQc5Xl6K', 'NVBC',       'Hoạt động'),
-('ND007', '0901000001', '$2a$10$7EqJtq98hPqEX7fNZaFWoOHi0qM5B.pU/4GZ3Y41N7F/2kQc5Xl6K', 'KHACH_HANG', 'Hoạt động')
+('ND001', 'admin',  '$2a$10$BaxCyj/IY6CxGzc7aG2WauO0rOSnphOXftgCMNQDjMt2R24eUOgAi', 'ADMIN',      'Hoạt động'),
+('ND002', 'nvbc01', '$2a$10$BaxCyj/IY6CxGzc7aG2WauO0rOSnphOXftgCMNQDjMt2R24eUOgAi', 'NVBC',       'Hoạt động'),
+('ND007', '0901000001', '$2a$10$BaxCyj/IY6CxGzc7aG2WauO0rOSnphOXftgCMNQDjMt2R24eUOgAi', 'KHACH_HANG', 'Hoạt động')
 ON CONFLICT (ma_nd) DO NOTHING;
 
 -- 7. NHÂN VIÊN BƯU CỤC

@@ -334,20 +334,18 @@ class PostOfficeAndFinanceFullTest {
     @DisplayName("Kiểm tra đăng nhập của tài khoản 0901000001")
     void testLoginCustomer() {
         String realHash = passwordEncoder.encode("123456");
-        System.out.println("REAL HASH FOR 123456: " + realHash);
-        var nd = nguoiDungRepository.findByTenDangNhap("0901000001").orElseThrow();
-        nd.setMatKhau(realHash);
-        nguoiDungRepository.save(nd);
+        for (var u : nguoiDungRepository.findAll()) {
+            u.setMatKhau(realHash);
+            nguoiDungRepository.save(u);
+        }
 
-        // Cũng cập nhật cho admin và nvbc01 để mọi tài khoản đều đăng nhập được bằng 123456
-        nguoiDungRepository.findByTenDangNhap("admin").ifPresent(a -> { a.setMatKhau(realHash); nguoiDungRepository.save(a); });
-        nguoiDungRepository.findByTenDangNhap("nvbc01").ifPresent(n -> { n.setMatKhau(realHash); nguoiDungRepository.save(n); });
-
-        var req = new com.example.backend.dto.request.LoginRequest();
-        req.setTenDangNhap("0901000001");
-        req.setMatKhau("123456");
-        var resp = authService.login(req);
-        System.out.println("LOGIN SUCCESS TOKEN: " + resp.getAccessToken());
-        assertNotNull(resp.getAccessToken());
+        for (String u : java.util.List.of("admin", "nvbc01", "nvdp01", "tx01", "0901000001")) {
+            var req = new com.example.backend.dto.request.LoginRequest();
+            req.setTenDangNhap(u);
+            req.setMatKhau("123456");
+            var resp = authService.login(req);
+            System.out.println("LOGIN OK -> " + u + " | Vai tro: " + resp.getVaiTro() + " | Token: " + (resp.getAccessToken() != null));
+            assertNotNull(resp.getAccessToken());
+        }
     }
 }

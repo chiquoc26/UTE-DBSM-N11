@@ -23,7 +23,6 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addRedirectViewController("/", "/dispatcher/12-dashboard.html");
         registry.addViewController("/dispatcher/dashboard").setViewName("forward:/dispatcher/12-dashboard.html");
         registry.addViewController("/dispatcher/routes").setViewName("forward:/dispatcher/13-routes.html");
         registry.addViewController("/dispatcher/trips").setViewName("forward:/dispatcher/14-trips.html");
