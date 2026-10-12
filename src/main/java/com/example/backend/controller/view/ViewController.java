@@ -92,25 +92,45 @@ public class ViewController implements WebMvcConfigurer {
         return "guest/04-tracking";
     }
 
-    @GetMapping("/customer/dashboard")
+    @GetMapping({"/customer/dashboard", "/customer/05-dashboard.html"})
     public String customerDashboard() {
         return "customer/05-dashboard";
     }
 
-    @GetMapping("/admin/users")
+    @GetMapping({"/admin/dashboard", "/admin/18-dashboard.html"})
+    public String adminDashboard() {
+        return "admin/18-dashboard";
+    }
+
+    @GetMapping({"/admin/orders", "/admin/27-orders.html"})
+    public String adminOrders() {
+        return "admin/27-orders";
+    }
+
+    @GetMapping({"/admin/users", "/admin/19-users.html"})
     public String adminUsers() {
         return "admin/19-users";
     }
 
-    @GetMapping("/admin/dashboard")
-    public String adminDashboard() {
-        return "admin/18-dashboard";
+    @GetMapping({"/admin/warehouses", "/admin/24-warehouses.html"})
+    public String adminWarehouses() {
+        return "admin/24-warehouses";
+    }
+
+    @GetMapping({"/admin/vehicles", "/admin/25-vehicles.html"})
+    public String adminVehicles() {
+        return "admin/25-vehicles";
+    }
+
+    @GetMapping({"/admin/settings", "/admin/30-settings.html"})
+    public String adminSettings() {
+        return "admin/30-settings";
     }
 
     // =========================================================================
     // PHÂN HỆ KHÁCH HÀNG: CHI TIẾT ĐƠN HÀNG (UC07) & THANH TOÁN (UC08)
     // =========================================================================
-    @GetMapping("/customer/order-detail")
+    @GetMapping({"/customer/order-detail", "/customer/07-order-detail.html"})
     public String customerOrderDetail(@RequestParam(required = false) String maDh, Model model) {
         if (maDh != null && !maDh.isBlank()) {
             model.addAttribute("maDh", maDh);
@@ -118,7 +138,7 @@ public class ViewController implements WebMvcConfigurer {
         return "customer/07-order-detail";
     }
 
-    @GetMapping("/customer/payment")
+    @GetMapping({"/customer/payment", "/customer/08-payment.html"})
     public String customerPayment(@RequestParam(required = false) String maDh, Model model) {
         if (maDh != null && !maDh.isBlank()) {
             model.addAttribute("maDh", maDh);
@@ -129,7 +149,7 @@ public class ViewController implements WebMvcConfigurer {
     // =========================================================================
     // 1. PHÂN HỆ KHÁCH HÀNG: TẠO ĐƠN HÀNG (UC04)
     // =========================================================================
-    @GetMapping("/customer/create-order")
+    @GetMapping({"/customer/create-order", "/customer/06-create-order.html"})
     public String customerCreateOrder(Model model,
                                       @RequestParam(value = "success", required = false) Boolean success,
                                       @RequestParam(value = "maDh", required = false) String createdMaDh) {
@@ -197,7 +217,7 @@ public class ViewController implements WebMvcConfigurer {
     // =========================================================================
     // 2. PHÂN HỆ BƯU CỤC: TIẾP NHẬN ĐƠN (UC08)
     // =========================================================================
-    @GetMapping("/post-office/dashboard")
+    @GetMapping({"/post-office/dashboard", "/post-office/09-dashboard.html"})
     public String postOfficeDashboard(
             @RequestParam(value = "maKho", defaultValue = "KHO01") String maKho,
             @RequestParam(value = "receivedMaDh", required = false) String receivedMaDh,
@@ -268,7 +288,7 @@ public class ViewController implements WebMvcConfigurer {
     // =========================================================================
     // 3. PHÂN HỆ BƯU CỤC: QUẢN LÝ KIỆN HÀNG & CHUYỂN KHO (UC09)
     // =========================================================================
-    @GetMapping("/post-office/packages")
+    @GetMapping({"/post-office/packages", "/post-office/10-packages.html"})
     public String postOfficePackages(
             @RequestParam(value = "transferredMaKien", required = false) String transferredMaKien,
             Model model) {
@@ -311,7 +331,7 @@ public class ViewController implements WebMvcConfigurer {
     // =========================================================================
     // 4. PHÂN HỆ BƯU CỤC: CẬP NHẬT TRẠNG THÁI (UC10)
     // =========================================================================
-    @GetMapping("/post-office/update-status")
+    @GetMapping({"/post-office/update-status", "/post-office/11-update-status.html"})
     public String postOfficeUpdateStatus(
             @RequestParam(value = "updatedMaDh", required = false) String updatedMaDh,
             Model model) {
@@ -354,7 +374,7 @@ public class ViewController implements WebMvcConfigurer {
     // =========================================================================
     // 5. PHÂN HỆ ADMIN: QUẢN LÝ THANH TOÁN & ĐỐI SOÁT COD (UC06, UC07, 4.2.22)
     // =========================================================================
-    @GetMapping("/admin/payments")
+    @GetMapping({"/admin/payments", "/admin/28-payments.html"})
     public String adminPayments(
             @RequestParam(value = "processedMaDh", required = false) String processedMaDh,
             Model model) {
@@ -403,7 +423,7 @@ public class ViewController implements WebMvcConfigurer {
     // =========================================================================
     // 6. PHÂN HỆ ADMIN: BÁO CÁO THỐNG KÊ & HIỆU SUẤT SLA (UC17, 4.2.23)
     // =========================================================================
-    @GetMapping("/admin/reports")
+    @GetMapping({"/admin/reports", "/admin/29-reports.html"})
     public String adminReports(Model model) {
         log.info("Tải Báo cáo thống kê quản trị từ cơ sở dữ liệu");
 
