@@ -48,6 +48,22 @@ public class PostOfficeApiController {
     }
 
     @Operation(
+            summary = "UC08: Danh sách đơn hàng chờ tiếp nhận có phân trang",
+            description = "Lấy danh sách các đơn hàng mới tạo (TT01) được phân bổ đến bưu cục gửi chỉ định, có phân trang page và size"
+    )
+    @GetMapping("/orders/pending/paged")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<PendingOrderResponse>>> getPendingOrdersPaged(
+            @Parameter(description = "Mã bưu cục gửi", example = "KHO01", required = true)
+            @RequestParam String maKho,
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số lượng bản ghi mỗi trang", example = "10")
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Page<PendingOrderResponse> orders = postOfficeService.getPendingOrdersPaged(maKho, page, size);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách đơn hàng chờ tiếp nhận phân trang thành công", orders));
+    }
+
+    @Operation(
             summary = "UC08: Tiếp nhận đơn hàng và lập kiện",
             description = "Bưu cục xác nhận tiếp nhận đơn hàng tại quầy, đo đạc kích thước/khối lượng, lập kiện và chuyển trạng thái đơn sang 'Đã tiếp nhận' (TT02)"
     )
@@ -95,6 +111,20 @@ public class PostOfficeApiController {
             @Valid @RequestBody TransferWarehouseRequest request) {
         TransferWarehouseResponse response = postOfficeService.transferWarehouse(maKien, request);
         return ResponseEntity.ok(ApiResponse.success(response.getThongBao(), response));
+    }
+
+    @Operation(
+            summary = "UC09: Danh sách kiện hàng lưu kho có phân trang",
+            description = "Lấy danh sách các kiện hàng kèm đơn hàng và kho lưu hiện tại có phân trang"
+    )
+    @GetMapping("/packages/paged")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<PackageListItemResponse>>> getPackagesPaged(
+            @Parameter(description = "Số trang (bắt đầu từ 0)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Số lượng bản ghi mỗi trang", example = "10")
+            @RequestParam(defaultValue = "10") int size) {
+        org.springframework.data.domain.Page<PackageListItemResponse> packages = postOfficeService.getPackagesPaged(page, size);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách kiện hàng phân trang thành công", packages));
     }
 
     @Operation(

@@ -251,6 +251,42 @@ public class DonHangService {
         return new PageImpl<>(content, PageRequest.of(page, size), total);
     }
 
+    @SuppressWarnings("unchecked")
+    public DonHangChiTietResponse layChiTietDonHang(String maDh) {
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                SELECT ma_dh, ngay_tao, ten_nguoi_nhan, sdt_nhan, dia_chi_lay, dia_chi_giao,
+                       ten_kho_gui, ten_kho_nhan, ma_tt, ten_trang_thai,
+                       so_kien, tong_kg, phi_van_chuyen, cod, tong_thu
+                FROM v_don_hang_chi_tiet
+                WHERE ma_dh = :maDh
+                """)
+                .setParameter("maDh", maDh)
+                .getResultList();
+
+        if (rows.isEmpty()) {
+            return null;
+        }
+
+        Object[] r = rows.get(0);
+        return DonHangChiTietResponse.builder()
+                .maDh((String) r[0])
+                .ngayTao(toLocalDateTime(r[1]))
+                .tenNguoiNhan((String) r[2])
+                .sdtNhan((String) r[3])
+                .diaChiLay((String) r[4])
+                .diaChiGiao((String) r[5])
+                .tenKhoGui((String) r[6])
+                .tenKhoNhan((String) r[7])
+                .maTt((String) r[8])
+                .tenTrangThai((String) r[9])
+                .soKien(toLong(r[10]))
+                .tongKg(toBigDecimal(r[11]))
+                .phiVanChuyen(toBigDecimal(r[12]))
+                .cod(toBigDecimal(r[13]))
+                .tongThu(toBigDecimal(r[14]))
+                .build();
+    }
+
     // --- Helpers ---
     private LocalDateTime toLocalDateTime(Object obj) {
         if (obj == null) return null;

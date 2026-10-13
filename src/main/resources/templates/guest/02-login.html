@@ -109,8 +109,14 @@
                     localStorage.setItem('token', resData.data.accessToken);
                     localStorage.setItem('maNd', resData.data.maNd);
                     localStorage.setItem('tenDangNhap', resData.data.tenDangNhap);
+                    localStorage.setItem('hoTen', resData.data.hoTen || resData.data.tenDangNhap);
                     localStorage.setItem('vaiTro', resData.data.vaiTro);
                     localStorage.setItem('tenVaiTro', resData.data.tenVaiTro || '');
+                    if (resData.data.avatarUrl) {
+                        localStorage.setItem('userAvatarUrl', resData.data.avatarUrl);
+                    } else {
+                        localStorage.removeItem('userAvatarUrl');
+                    }
 
                     // Lưu cookie để trình duyệt tự động gửi kèm khi truy cập trực tiếp các trang giao diện
                     document.cookie = `accessToken=${resData.data.accessToken}; path=/; max-age=86400; SameSite=Lax`;

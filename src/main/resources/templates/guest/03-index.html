@@ -248,9 +248,23 @@
             <a href="#hubs">Bưu cục</a>
         </nav>
 
-        <div style="display: flex; align-items: center; gap: 12px;">
+        <div id="guestAuthBox" style="display: flex; align-items: center; gap: 12px;">
             <a th:href="@{/login}" href="/login" class="btn btn-secondary btn-sm">Đăng nhập</a>
             <a th:href="@{/register}" href="/register" class="btn btn-primary btn-sm">Đăng ký</a>
+        </div>
+        <div id="userAuthBox" style="display: none; align-items: center; gap: 12px;">
+            <a id="dashboardLink" href="/customer/dashboard" style="display: flex; align-items: center; gap: 8px; text-decoration: none; padding: 4px 12px; border-radius: 20px; background: rgba(13, 44, 84, 0.06); transition: background 0.2s;">
+                <div id="headerAvatar" style="width: 32px; height: 32px; border-radius: 50%; background: var(--brand-blue); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;">
+                    KH
+                </div>
+                <div style="text-align: left; line-height: 1.2;">
+                    <span id="headerUserName" style="font-weight: 700; font-size: 13.5px; color: var(--brand-navy); display: block;">Khách hàng</span>
+                    <span id="headerUserRole" style="font-size: 11px; color: var(--text-muted); display: block;">Tài khoản</span>
+                </div>
+            </a>
+            <a th:href="@{/logout}" href="/logout" onclick="logout()" class="btn btn-secondary btn-sm" style="color: #DC2626; border-color: rgba(220, 38, 38, 0.2);">
+                Đăng xuất
+            </a>
         </div>
     </header>
 
@@ -552,6 +566,53 @@
             document.getElementById('calcResult').style.display = 'block';
             document.getElementById('calcFeeText').innerText = fee.toLocaleString('vi-VN') + ' đ';
         }
+
+        function logout() {
+            localStorage.clear();
+            document.cookie = 'accessToken=; path=/; max-age=0';
+            window.location.href = '/login';
+        }
+
+        function checkAuthStatus() {
+            const token = localStorage.getItem('accessToken');
+            const hoTen = localStorage.getItem('hoTen');
+            const tenDangNhap = localStorage.getItem('tenDangNhap');
+            const vaiTro = localStorage.getItem('vaiTro');
+            const tenVaiTro = localStorage.getItem('tenVaiTro');
+
+            const guestBox = document.getElementById('guestAuthBox');
+            const userBox = document.getElementById('userAuthBox');
+
+            if (token) {
+                if (guestBox) guestBox.style.display = 'none';
+                if (userBox) userBox.style.display = 'flex';
+
+                const name = (hoTen && hoTen !== 'undefined' && hoTen.trim()) ? hoTen : (tenDangNhap || 'Người dùng');
+                const nameEl = document.getElementById('headerUserName');
+                if (nameEl) nameEl.innerText = name;
+
+                const initials = name.trim().split(' ').map(w => w[0]).join('').slice(-2).toUpperCase();
+                const avEl = document.getElementById('headerAvatar');
+                if (avEl && initials) avEl.innerText = initials;
+
+                const roleEl = document.getElementById('headerUserRole');
+                if (roleEl) roleEl.innerText = tenVaiTro || vaiTro || 'Thành viên';
+
+                const dashLink = document.getElementById('dashboardLink');
+                if (dashLink) {
+                    if (vaiTro === 'ADMIN') dashLink.href = '/admin/dashboard';
+                    else if (vaiTro === 'NVBC') dashLink.href = '/post-office/dashboard';
+                    else if (vaiTro === 'NVDP') dashLink.href = '/dispatcher/dashboard';
+                    else if (vaiTro === 'TAI_XE') dashLink.href = '/driver/dashboard';
+                    else dashLink.href = '/customer/dashboard';
+                }
+            } else {
+                if (guestBox) guestBox.style.display = 'flex';
+                if (userBox) userBox.style.display = 'none';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', checkAuthStatus);
     </script>
 </body>
 </html>

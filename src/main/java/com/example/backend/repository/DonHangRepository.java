@@ -62,6 +62,12 @@ public interface DonHangRepository extends JpaRepository<DonHang, String> {
 
     List<DonHang> findByMaKhGuiOrderByNgayTaoDesc(String maKhGui);
 
+    Page<DonHang> findByMaKhGuiOrderByNgayTaoDesc(String maKhGui, Pageable pageable);
+
+    Page<DonHang> findByMaKhoGuiAndTrangThai_MaTrangThai(String maKhoGui, String maTrangThai, Pageable pageable);
+
     List<DonHang> findAllByOrderByNgayTaoDesc();
+
+    Page<DonHang> findAllByOrderByNgayTaoDesc(Pageable pageable);
 }
 

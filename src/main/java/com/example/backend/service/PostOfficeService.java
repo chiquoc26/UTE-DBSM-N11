@@ -6,9 +6,13 @@ import com.example.backend.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -45,9 +49,49 @@ public class PostOfficeService {
         VALID_TRANSITIONS.put("TT08", Set.of("TT05", "TT07"));
     }
 
+    private PendingOrderResponse mapToPendingOrderResponse(DonHang d) {
+        List<KienHang> kiens = kienHangRepository.findByDonHang_MaDh(d.getMaDh());
+        KienHang firstKien = kiens.isEmpty() ? null : kiens.get(0);
+
+        List<ThanhToan> payments = thanhToanRepository.findByDonHang_MaDhOrderByThoiGianDesc(d.getMaDh());
+        ThanhToan phiPayment = payments.stream()
+                .filter(p -> "PHI_VC".equalsIgnoreCase(p.getLoaiKhoan()))
+                .findFirst()
+                .orElse(null);
+
+        boolean phiDaThanhToan = phiPayment != null &&
+                ("Đã thanh toán".equalsIgnoreCase(phiPayment.getTrangThai())
+                        || "DA_THANH_TOAN".equalsIgnoreCase(phiPayment.getTrangThai()));
+        String phuongThuc = phiPayment != null ? phiPayment.getPhuongThuc() : "Chuyển khoản";
+        String tinhTrang = phiDaThanhToan ? "Đã thanh toán" : "Chưa thanh toán";
+
+        return PendingOrderResponse.builder()
+                .maDh(d.getMaDh())
+                .maKhGui(d.getMaKhGui())
+                .tenNguoiNhan(d.getTenNguoiNhan())
+                .sdtNhan(d.getSdtNhan())
+                .diaChiLay(d.getDiaChiLay())
+                .diaChiGiao(d.getDiaChiGiao())
+                .maKhoGui(d.getMaKhoGui())
+                .maKhoNhan(d.getMaKhoNhan())
+                .ngayTao(d.getNgayTao())
+                .phiVanChuyen(d.getPhiVanChuyen())
+                .cod(d.getCod())
+                .maTrangThai(d.getTrangThai().getMaTrangThai())
+                .tenTrangThai(d.getTrangThai().getTenTrangThai())
+                .phiDaThanhToan(phiDaThanhToan)
+                .tinhTrangThanhToan(tinhTrang)
+                .phuongThucThanhToan(phuongThuc)
+                .khoiLuong(firstKien != null ? firstKien.getKhoiLuong() : new BigDecimal("1.5"))
+                .dai(firstKien != null && firstKien.getDai() != null ? firstKien.getDai() : new BigDecimal("20.0"))
+                .rong(firstKien != null && firstKien.getRong() != null ? firstKien.getRong() : new BigDecimal("15.0"))
+                .cao(firstKien != null && firstKien.getCao() != null ? firstKien.getCao() : new BigDecimal("10.0"))
+                .loaiHang(firstKien != null && firstKien.getLoaiHang() != null ? firstKien.getLoaiHang() : "Hàng tiêu chuẩn")
+                .build();
+    }
+
     /**
-     * UC08: Lấy danh sách đơn hàng chờ tiếp nhận tại bưu cục (trạng thái 'Mới tạo'
-     * TT01)
+     * UC08: Lấy danh sách đơn hàng chờ tiếp nhận tại bưu cục (trạng thái 'Mới tạo' TT01)
      */
     @Transactional(readOnly = true)
     public List<PendingOrderResponse> getPendingOrders(String maKho) {
@@ -57,38 +101,22 @@ public class PostOfficeService {
         }
 
         List<DonHang> orders = donHangRepository.findByMaKhoGuiAndTrangThai_MaTrangThai(maKho, "TT01");
-        return orders.stream().map(d -> {
-            List<ThanhToan> payments = thanhToanRepository.findByDonHang_MaDhOrderByThoiGianDesc(d.getMaDh());
-            ThanhToan phiPayment = payments.stream()
-                    .filter(p -> "PHI_VC".equalsIgnoreCase(p.getLoaiKhoan()))
-                    .findFirst()
-                    .orElse(null);
+        return orders.stream().map(this::mapToPendingOrderResponse).toList();
+    }
 
-            boolean phiDaThanhToan = phiPayment != null &&
-                    ("Đã thanh toán".equalsIgnoreCase(phiPayment.getTrangThai())
-                            || "DA_THANH_TOAN".equalsIgnoreCase(phiPayment.getTrangThai()));
-            String phuongThuc = phiPayment != null ? phiPayment.getPhuongThuc() : "Tiền mặt";
-            String tinhTrang = phiDaThanhToan ? "Đã thanh toán" : "Chưa thanh toán (Thu tiền mặt khi lấy hàng)";
+    /**
+     * UC08: Lấy danh sách đơn hàng chờ tiếp nhận có phân trang tại bưu cục
+     */
+    @Transactional(readOnly = true)
+    public Page<PendingOrderResponse> getPendingOrdersPaged(String maKho, int page, int size) {
+        log.info("Lấy danh sách đơn hàng chờ tiếp nhận phân trang tại bưu cục {} (page={}, size={})", maKho, page, size);
+        if (!khoRepository.existsById(maKho)) {
+            throw new EntityNotFoundException("Không tìm thấy bưu cục với mã: " + maKho);
+        }
 
-            return PendingOrderResponse.builder()
-                    .maDh(d.getMaDh())
-                    .maKhGui(d.getMaKhGui())
-                    .tenNguoiNhan(d.getTenNguoiNhan())
-                    .sdtNhan(d.getSdtNhan())
-                    .diaChiLay(d.getDiaChiLay())
-                    .diaChiGiao(d.getDiaChiGiao())
-                    .maKhoGui(d.getMaKhoGui())
-                    .maKhoNhan(d.getMaKhoNhan())
-                    .ngayTao(d.getNgayTao())
-                    .phiVanChuyen(d.getPhiVanChuyen())
-                    .cod(d.getCod())
-                    .maTrangThai(d.getTrangThai().getMaTrangThai())
-                    .tenTrangThai(d.getTrangThai().getTenTrangThai())
-                    .phiDaThanhToan(phiDaThanhToan)
-                    .tinhTrangThanhToan(tinhTrang)
-                    .phuongThucThanhToan(phuongThuc)
-                    .build();
-        }).toList();
+        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size));
+        Page<DonHang> ordersPage = donHangRepository.findByMaKhoGuiAndTrangThai_MaTrangThai(maKho, "TT01", pageable);
+        return ordersPage.map(this::mapToPendingOrderResponse);
     }
 
     /**
@@ -321,6 +349,27 @@ public class PostOfficeService {
                 .thoiGian(LocalDateTime.now())
                 .thongBao("Cập nhật trạng thái đơn hàng thành công")
                 .build();
+    }
+
+    /**
+     * Lấy danh sách kiện hàng phân trang (UC09)
+     */
+    @Transactional(readOnly = true)
+    public Page<PackageListItemResponse> getPackagesPaged(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<KienHang> paged = kienHangRepository.findAllWithDonHangAndKho(pageable);
+        return paged.map(k -> PackageListItemResponse.builder()
+                .maKien(k.getMaKien())
+                .maDh(k.getDonHang() != null ? k.getDonHang().getMaDh() : null)
+                .maKhoHienTai(k.getKhoHienTai() != null ? k.getKhoHienTai().getMaKho() : null)
+                .tenKhoHienTai(k.getKhoHienTai() != null ? k.getKhoHienTai().getTenKho() : "Chưa nhập kho")
+                .khoiLuong(k.getKhoiLuong())
+                .kichThuoc(k.getKichThuoc() != null ? k.getKichThuoc() : (k.getDai() + "x" + k.getRong() + "x" + k.getCao()))
+                .dai(k.getDai())
+                .rong(k.getRong())
+                .cao(k.getCao())
+                .loaiHang(k.getLoaiHang())
+                .build());
     }
 
     /**

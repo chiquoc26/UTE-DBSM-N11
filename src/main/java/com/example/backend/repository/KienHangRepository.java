@@ -1,6 +1,8 @@
 package com.example.backend.repository;
 
 import com.example.backend.entity.KienHang;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,6 +25,10 @@ public interface KienHangRepository extends JpaRepository<KienHang, String> {
 
     @Query("SELECT k FROM KienHang k LEFT JOIN FETCH k.donHang LEFT JOIN FETCH k.khoHienTai")
     List<KienHang> findAllWithDonHangAndKho();
+
+    @Query(value = "SELECT k FROM KienHang k LEFT JOIN FETCH k.donHang LEFT JOIN FETCH k.khoHienTai",
+           countQuery = "SELECT COUNT(k) FROM KienHang k")
+    Page<KienHang> findAllWithDonHangAndKho(Pageable pageable);
 
     @org.springframework.data.jpa.repository.Modifying
     @Query("UPDATE KienHang k SET k.khoHienTai = :kho WHERE k.maKien = :maKien")

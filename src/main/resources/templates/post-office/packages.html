@@ -43,11 +43,14 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div class="user-avatar" style="background-color: #16A34A;">BC</div>
-                <div class="user-info">
-                    <div class="user-name">Phạm Hoàng Nam</div>
-                    <div class="user-sub">Bưu cục Thủ Đức (NV001)</div>
+                <div class="user-avatar" id="userAvatar" onclick="openAccountSettingsModal()" style="background-color: #16A34A; cursor: pointer;" title="Cài đặt tài khoản">BC</div>
+                <div class="user-info" onclick="openAccountSettingsModal()" style="cursor: pointer;" title="Cài đặt tài khoản">
+                    <div class="user-name" id="userNameDisplay">Phạm Hoàng Nam</div>
+                    <div class="user-sub" id="userSubDisplay">Bưu cục Thủ Đức (NV001)</div>
                 </div>
+                <button type="button" class="sidebar-settings-btn" onclick="openAccountSettingsModal()" title="Cài đặt tài khoản" aria-label="Cài đặt tài khoản">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 18px; height: 18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </button>
             </div>
         </aside>
 
@@ -135,6 +138,7 @@
                             </tbody>
                         </table>
                     </div>
+                    <div id="packagesPagination" style="padding: 12px 16px; border-top: 1px solid var(--border-color);"></div>
                 </div>
             </div>
         </main>
@@ -172,7 +176,45 @@
         </div>
     </div>
 
-    <script>
+    <script th:src="@{/js/components.js}" src="/js/components.js"></script>
+    <script th:src="@{/js/account-settings.js}" src="/js/account-settings.js"></script>
+    <script th:inline="javascript">
+        const hoTen = localStorage.getItem('hoTen');
+        const tenDangNhap = localStorage.getItem('tenDangNhap') || '';
+        if (hoTen && hoTen !== 'undefined' && hoTen.trim() && !/^[0-9+]+$/.test(hoTen.trim())) {
+            const el = document.getElementById('userNameDisplay');
+            if (el) el.innerText = hoTen;
+            const initials = hoTen.trim().split(' ').map(w => w[0]).join('').slice(-2).toUpperCase();
+            const av = document.getElementById('userAvatar');
+            if (av && initials && !localStorage.getItem('userAvatarUrl')) av.innerText = initials;
+        }
+
+        function logout() {
+            localStorage.clear();
+            document.cookie = "accessToken=; path=/; max-age=0; SameSite=Lax";
+            window.location.href = '/login';
+        }
+
+        // Khởi tạo phân trang cho bảng Kiện hàng (5, 10, 20 dòng/trang)
+        const ssrPackagesTotal = /*[[${totalElements != null ? totalElements : (#lists.size(danhSachKien))}]]*/ 0;
+        const ssrPackagesPage = /*[[${currentPage != null ? currentPage + 1 : 1}]]*/ 1;
+        const ssrPackagesSize = /*[[${pageSize != null ? pageSize : 10}]]*/ 10;
+
+        const packagesPagination = new TablePagination({
+            containerId: 'packagesPagination',
+            defaultPageSize: ssrPackagesSize,
+            pageSizeOptions: [5, 10, 20],
+            onChange: (page, size) => {
+                window.location.href = `/post-office/packages?page=${page - 1}&size=${size}`;
+            }
+        });
+
+        packagesPagination.setServerPageInfo({
+            page: ssrPackagesPage,
+            size: ssrPackagesSize,
+            totalItems: ssrPackagesTotal
+        });
+
         function moHopThoaiChuyenKho(maKien, currentMaKho) {
             document.getElementById('transferMaKien').value = maKien;
             var select = document.getElementById('transferMaKhoMoi');
@@ -196,6 +238,5 @@
             modal.style.display = 'none';
         }
     </script>
-    <script th:src="@{/js/components.js}" src="/js/components.js"></script>
 </body>
 </html>

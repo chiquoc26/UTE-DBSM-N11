@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>15 – Dashboard Tài xế - UTE Express</title>
+    <title>15 – Bảng điều khiển - UTE Express</title>
     <link rel="stylesheet" href="../../static/css/design-system.css">
     <link rel="stylesheet" href="../../static/css/components.css">
     <link rel="stylesheet" href="../../static/css/layout.css">
@@ -78,7 +78,7 @@
                 <div class="nav-section-title">Nhiệm vụ vận chuyển</div>
                 <a href="15-dashboard.html" class="nav-item active">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    <span>Dashboard Tài xế</span>
+                    <span>Bảng điều khiển</span>
                 </a>
                 <a href="16-trip-detail.html" class="nav-item" id="navTripDetail">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -107,7 +107,7 @@
         <main class="main-wrapper">
             <header class="top-header">
                 <div class="breadcrumbs">
-                    <a href="#">Tài xế</a> <span>/</span> <span>Dashboard</span>
+                    <a href="#">Tài xế</a> <span>/</span> <span>Bảng điều khiển</span>
                 </div>
                 <div class="header-actions">
                     <a href="17-delivery-update.html" class="btn btn-primary btn-sm" id="btnQuickScan">📷 Quét kiện giao hàng</a>
@@ -906,5 +906,6 @@
 
         document.addEventListener('DOMContentLoaded', loadDriverDashboard);
     </script>
+    <script th:src="@{/js/account-settings.js}" src="/js/account-settings.js"></script>
 </body>
 </html>

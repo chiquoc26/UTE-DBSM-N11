@@ -61,8 +61,8 @@ public class SecurityConfig {
 
             // Phân quyền Endpoints
             .authorizeHttpRequests(auth -> auth
-                // Static Assets (CSS, JS, Images, Favicon, Error)
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/error").permitAll()
+                // Static Assets (CSS, JS, Images, Favicon, Error, Uploads)
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico", "/error").permitAll()
                 
                 // Public Web Views
                 .requestMatchers("/", "/login", "/register", "/tracking", "/logout", "/design-system").permitAll()

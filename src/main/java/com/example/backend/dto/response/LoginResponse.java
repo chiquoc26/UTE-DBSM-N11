@@ -16,8 +16,9 @@ public class LoginResponse {
     @Schema(description = "JWT access token")
     private String accessToken;
 
+    @Builder.Default
     @Schema(description = "Loại token", example = "Bearer")
-    private final String tokenType = "Bearer";
+    private String tokenType = "Bearer";
 
     @Schema(description = "Mã người dùng", example = "ND000001")
     private String maNd;
@@ -30,4 +31,10 @@ public class LoginResponse {
 
     @Schema(description = "Tên vai trò", example = "Khách hàng")
     private String tenVaiTro;
+
+    @Schema(description = "Họ và tên người dùng", example = "Nguyễn Văn An")
+    private String hoTen;
+
+    @Schema(description = "Ảnh đại diện người dùng")
+    private String avatarUrl;
 }

@@ -25,6 +25,25 @@ import org.springframework.web.bind.annotation.*;
 public class KhachHangController {
 
     private final DonHangService donHangService;
+    private final com.example.backend.repository.KhachHangRepository khachHangRepository;
+    private final com.example.backend.repository.NguoiDungRepository nguoiDungRepository;
+
+    @Operation(
+        summary = "Thông tin hồ sơ khách hàng hiện tại",
+        description = "Lấy họ tên, SĐT, địa chỉ mặc định của khách hàng đang đăng nhập"
+    )
+    @GetMapping("/profile")
+    @PreAuthorize("hasAuthority('KHACH_HANG')")
+    public ResponseEntity<ApiResponse<com.example.backend.entity.KhachHang>> getProfile(Authentication authentication) {
+        String username = authentication.getName();
+        com.example.backend.entity.KhachHang kh = khachHangRepository.findBySdt(username)
+                .or(() -> khachHangRepository.findByNguoiDung_MaNd(username))
+                .or(() -> nguoiDungRepository.findByTenDangNhap(username)
+                        .flatMap(nd -> khachHangRepository.findByNguoiDung_MaNd(nd.getMaNd())
+                                .or(() -> khachHangRepository.findBySdt(nd.getTenDangNhap()))))
+                .orElseThrow(() -> new com.example.backend.exception.BusinessException("Không tìm thấy hồ sơ khách hàng", 404));
+        return ResponseEntity.ok(ApiResponse.success("Lấy thông tin khách hàng thành công", kh));
+    }
 
     @Operation(
         summary = "Xem đơn hàng của tôi (UC05)",
@@ -46,5 +65,20 @@ public class KhachHangController {
 
         return ResponseEntity.ok(ApiResponse.success(
                 "Lấy danh sách đơn hàng thành công", result));
+    }
+
+    @Operation(
+        summary = "Chi tiết một đơn hàng theo mã",
+        description = "Lấy thông tin chi tiết đầy đủ của đơn hàng theo mã"
+    )
+    @GetMapping("/don-hang/{maDh}")
+    @PreAuthorize("hasAuthority('KHACH_HANG')")
+    public ResponseEntity<ApiResponse<DonHangChiTietResponse>> getChiTietDonHang(
+            @PathVariable String maDh) {
+        DonHangChiTietResponse result = donHangService.layChiTietDonHang(maDh);
+        if (result == null) {
+            throw new com.example.backend.exception.BusinessException("Không tìm thấy đơn hàng: " + maDh, 404);
+        }
+        return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết đơn hàng thành công", result));
     }
 }
