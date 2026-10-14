@@ -13,6 +13,8 @@ public interface TaiXeRepository extends JpaRepository<TaiXe, String> {
 
     Optional<TaiXe> findByNguoiDung_MaNd(String maNd);
 
+    Optional<TaiXe> findByNguoiDung_TenDangNhap(String tenDangNhap);
+
     @Query("SELECT tx FROM TaiXe tx WHERE tx.nguoiDung.maNd = :maNd")
     Optional<TaiXe> findByMaNd(@Param("maNd") String maNd);
 

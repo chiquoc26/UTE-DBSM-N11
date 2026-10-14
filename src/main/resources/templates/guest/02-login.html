@@ -252,6 +252,14 @@
                     localStorage.setItem('hoTen', resData.data.hoTen || resData.data.tenDangNhap);
                     localStorage.setItem('vaiTro', resData.data.vaiTro);
                     localStorage.setItem('tenVaiTro', resData.data.tenVaiTro || '');
+                    if (resData.data.maDoiTuong) {
+                        localStorage.setItem('maDoiTuong', resData.data.maDoiTuong);
+                        if (resData.data.vaiTro === 'TAI_XE') {
+                            localStorage.setItem('ute_current_driver', resData.data.maDoiTuong);
+                        }
+                    } else if (resData.data.vaiTro === 'TAI_XE') {
+                        localStorage.setItem('ute_current_driver', resData.data.tenDangNhap);
+                    }
                     if (resData.data.avatarUrl) {
                         localStorage.setItem('userAvatarUrl', resData.data.avatarUrl);
                     } else {

@@ -37,4 +37,7 @@ public class LoginResponse {
 
     @Schema(description = "Ảnh đại diện người dùng")
     private String avatarUrl;
+
+    @Schema(description = "Mã đối tượng theo vai trò (maTx, maNv, maKh)", example = "TX001")
+    private String maDoiTuong;
 }

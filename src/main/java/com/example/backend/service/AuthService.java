@@ -28,6 +28,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final NguoiDungRepository nguoiDungRepository;
     private final KhachHangRepository khachHangRepository;
+    private final TaiXeRepository taiXeRepository;
+    private final NhanVienRepository nhanVienRepository;
     private final OtpCacheService otpCacheService;
     private final EmailService emailService;
     private final JwtUtils jwtUtils;
@@ -50,12 +52,43 @@ public class AuthService {
         NguoiDung nd = nguoiDungRepository.findByTenDangNhap(request.getTenDangNhap())
                 .orElseThrow(() -> new BusinessException("Tài khoản không tồn tại", 404));
 
+        String hoTen = nd.getTenDangNhap();
+        String maDoiTuong = null;
+        String vaiTro = nd.getVaiTro().getMaVaiTro();
+
+        if ("TAI_XE".equals(vaiTro)) {
+            var tx = taiXeRepository.findByNguoiDung_MaNd(nd.getMaNd())
+                    .or(() -> taiXeRepository.findByNguoiDung_TenDangNhap(nd.getTenDangNhap()))
+                    .orElse(null);
+            if (tx != null) {
+                hoTen = tx.getHoTen();
+                maDoiTuong = tx.getMaTx();
+            }
+        } else if ("NVBC".equals(vaiTro) || "NVDP".equals(vaiTro)) {
+            var nv = nhanVienRepository.findByNguoiDung_MaNd(nd.getMaNd()).orElse(null);
+            if (nv != null) {
+                hoTen = nv.getHoTen();
+                maDoiTuong = nv.getMaNv();
+            }
+        } else if ("KHACH_HANG".equals(vaiTro)) {
+            var kh = khachHangRepository.findByNguoiDung_MaNd(nd.getMaNd()).orElse(null);
+            if (kh != null) {
+                hoTen = kh.getHoTen();
+                maDoiTuong = kh.getMaKh();
+            }
+        } else if ("ADMIN".equals(vaiTro)) {
+            hoTen = "Quản trị viên";
+            maDoiTuong = nd.getMaNd();
+        }
+
         return LoginResponse.builder()
                 .accessToken(token)
                 .maNd(nd.getMaNd())
                 .tenDangNhap(nd.getTenDangNhap())
-                .vaiTro(nd.getVaiTro().getMaVaiTro())
+                .vaiTro(vaiTro)
                 .tenVaiTro(nd.getVaiTro().getTenVaiTro())
+                .hoTen(hoTen)
+                .maDoiTuong(maDoiTuong)
                 .build();
     }
 
