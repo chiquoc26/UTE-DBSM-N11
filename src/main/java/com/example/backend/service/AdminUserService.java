@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AdminUserService {
 
     private final NguoiDungRepository nguoiDungRepository;
@@ -27,6 +26,20 @@ public class AdminUserService {
     private final KhachHangRepository khachHangRepository;
     private final PasswordEncoder passwordEncoder;
     private final EntityManager entityManager;
+
+    public AdminUserService(NguoiDungRepository nguoiDungRepository,
+                            NhanVienRepository nhanVienRepository,
+                            TaiXeRepository taiXeRepository,
+                            KhachHangRepository khachHangRepository,
+                            PasswordEncoder passwordEncoder,
+                            EntityManager entityManager) {
+        this.nguoiDungRepository = nguoiDungRepository;
+        this.nhanVienRepository = nhanVienRepository;
+        this.taiXeRepository = taiXeRepository;
+        this.khachHangRepository = khachHangRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.entityManager = entityManager;
+    }
 
     private static final String DEFAULT_PASSWORD = "123456@Ute";
 

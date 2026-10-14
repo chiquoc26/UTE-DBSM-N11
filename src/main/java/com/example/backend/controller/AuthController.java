@@ -35,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 @Tag(name = "Auth", description = "API Xác thực - Đăng nhập, Đăng ký, Quên mật khẩu, Đổi mật khẩu")
 @RestController
 @RequestMapping("/api/auth")
-@RequiredArgsConstructor
 @Validated
 public class AuthController {
 
@@ -46,6 +45,22 @@ public class AuthController {
     private final NguoiDungRepository nguoiDungRepository;
     private final PasswordEncoder passwordEncoder;
     private final com.example.backend.service.UserAvatarStorageService userAvatarStorageService;
+
+    public AuthController(AuthService authService,
+                          KhachHangRepository khachHangRepository,
+                          NhanVienRepository nhanVienRepository,
+                          TaiXeRepository taiXeRepository,
+                          NguoiDungRepository nguoiDungRepository,
+                          PasswordEncoder passwordEncoder,
+                          com.example.backend.service.UserAvatarStorageService userAvatarStorageService) {
+        this.authService = authService;
+        this.khachHangRepository = khachHangRepository;
+        this.nhanVienRepository = nhanVienRepository;
+        this.taiXeRepository = taiXeRepository;
+        this.nguoiDungRepository = nguoiDungRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.userAvatarStorageService = userAvatarStorageService;
+    }
 
     // ---- UC02: Đăng nhập ----
     @Operation(summary = "Đăng nhập", description = "Nhận username + password, trả về JWT Token")
