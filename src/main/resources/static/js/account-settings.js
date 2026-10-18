@@ -6,9 +6,15 @@
 (function() {
     let currentUserProfile = null;
 
+    function getCookie(name) {
+        const v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+        return v ? decodeURIComponent(v[2]) : null;
+    }
+
     // Helper lấy JWT token
     function getAuthToken() {
-        return localStorage.getItem('accessToken') || localStorage.getItem('token') || '';
+        const t = localStorage.getItem('accessToken') || localStorage.getItem('token') || getCookie('accessToken') || '';
+        return (t && t !== 'null' && t !== 'undefined') ? t : '';
     }
 
     // Cập nhật hiển thị tên người dùng
@@ -27,9 +33,9 @@
             if (avatarUrl) {
                 el.innerHTML = `<img src="${avatarUrl}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block;">`;
             } else {
-                const currentName = localStorage.getItem('hoTen') || el.innerText || 'KH';
+                const currentName = localStorage.getItem('hoTen') || el.innerText || 'AD';
                 const words = currentName.trim().split(' ');
-                let initials = 'KH';
+                let initials = 'AD';
                 if (words.length >= 2) {
                     initials = (words[words.length - 2][0] + words[words.length - 1][0]).toUpperCase();
                 } else if (words.length === 1 && words[0].length >= 2) {
@@ -59,7 +65,7 @@
         if (token) {
             fetch('/api/auth/me', {
                 headers: { 'Authorization': 'Bearer ' + token },
-                credentials: 'same-origin'
+                credentials: 'include'
             })
             .then(res => res.ok ? res.json() : null)
             .then(data => {
@@ -356,7 +362,7 @@
         if (token) {
             fetch('/api/auth/me', {
                 headers: { 'Authorization': 'Bearer ' + token },
-                credentials: 'same-origin'
+                credentials: 'include'
             })
             .then(res => res.ok ? res.json() : null)
             .then(data => {
@@ -443,7 +449,7 @@
                 const res = await fetch('/api/auth/avatar/upload', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + token },
-                    credentials: 'same-origin',
+                    credentials: 'include',
                     body: formData
                 });
                 const data = await res.json();
@@ -469,7 +475,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
-                    credentials: 'same-origin',
+                    credentials: 'include',
                     body: JSON.stringify({ avatarUrl: linkUrl })
                 });
                 const data = await res.json();
@@ -508,7 +514,7 @@
             const res = await fetch('/api/auth/avatar/remove', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + token },
-                credentials: 'same-origin'
+                credentials: 'include'
             });
             const data = await res.json();
 
@@ -585,7 +591,7 @@
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                credentials: 'same-origin',
+                credentials: 'include',
                 body: JSON.stringify({
                     matKhauCu: oldPassword,
                     matKhauMoi: newPassword,
