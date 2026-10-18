@@ -67,6 +67,8 @@ public class ViewController implements WebMvcConfigurer {
     private final AdminReportService adminReportService;
     private final DonHangService donHangService;
     private final NhanVienRepository nhanVienRepository;
+    private final PhuongTienRepository phuongTienRepository;
+    private final TaiXeRepository taiXeRepository;
 
     private KhachHang getCurrentKhachHang() {
         org.springframework.security.core.Authentication auth =
@@ -155,32 +157,177 @@ public class ViewController implements WebMvcConfigurer {
     }
 
     @GetMapping({"/admin/dashboard", "/admin/18-dashboard.html"})
-    public String adminDashboard() {
+    public String adminDashboard(Model model) {
+        log.info("Tải dữ liệu Admin Dashboard từ cơ sở dữ liệu");
+        AdminOverviewReportResponse overview = adminReportService.getOverviewReport();
+        long tongNguoiDung = nguoiDungRepository.count();
+        long tongKhachHang = khachHangRepository.count();
+        long tongNhanVien = nhanVienRepository.count();
+        long tongTaiXe = taiXeRepository.count();
+        long tongKho = khoRepository.count();
+        long tongPhuongTien = phuongTienRepository.count();
+        List<DonHang> donHangMoiNhat = donHangRepository.findAllByOrderByNgayTaoDesc(PageRequest.of(0, 6)).getContent();
+
+        model.addAttribute("overview", overview);
+        model.addAttribute("tongNguoiDung", tongNguoiDung);
+        model.addAttribute("tongKhachHang", tongKhachHang);
+        model.addAttribute("tongNhanVien", tongNhanVien);
+        model.addAttribute("tongTaiXe", tongTaiXe);
+        model.addAttribute("tongKho", tongKho);
+        model.addAttribute("tongPhuongTien", tongPhuongTien);
+        model.addAttribute("donHangMoiNhat", donHangMoiNhat);
+
         return "admin/18-dashboard";
     }
 
     @GetMapping({"/admin/orders", "/admin/27-orders.html"})
-    public String adminOrders() {
+    public String adminOrders(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String maTrangThai,
+            @RequestParam(required = false) String maKho,
+            Model model) {
+        log.info("Tải danh sách đơn hàng Admin, keyword={}, maTrangThai={}, maKho={}", keyword, maTrangThai, maKho);
+
+        List<DonHang> allOrders = donHangRepository.findAllByOrderByNgayTaoDesc();
+
+        List<DonHang> filteredOrders = allOrders.stream().filter(dh -> {
+            if (keyword != null && !keyword.isBlank()) {
+                String kw = keyword.trim().toLowerCase();
+                boolean matchMa = dh.getMaDh() != null && dh.getMaDh().toLowerCase().contains(kw);
+                boolean matchTenNhan = dh.getTenNguoiNhan() != null && dh.getTenNguoiNhan().toLowerCase().contains(kw);
+                boolean matchSdtNhan = dh.getSdtNhan() != null && dh.getSdtNhan().contains(kw);
+                boolean matchMaKh = dh.getMaKhGui() != null && dh.getMaKhGui().toLowerCase().contains(kw);
+                if (!matchMa && !matchTenNhan && !matchSdtNhan && !matchMaKh) return false;
+            }
+            if (maTrangThai != null && !maTrangThai.isBlank()) {
+                if (dh.getTrangThai() == null || !maTrangThai.equalsIgnoreCase(dh.getTrangThai().getMaTrangThai())) return false;
+            }
+            if (maKho != null && !maKho.isBlank()) {
+                if (!maKho.equalsIgnoreCase(dh.getMaKhoGui()) && !maKho.equalsIgnoreCase(dh.getMaKhoNhan())) return false;
+            }
+            return true;
+        }).toList();
+
+        model.addAttribute("danhSachDonHang", filteredOrders);
+        model.addAttribute("danhSachTrangThai", trangThaiDHRepository.findAll());
+        model.addAttribute("danhSachKho", khoRepository.findAll());
+        model.addAttribute("selectedKeyword", keyword);
+        model.addAttribute("selectedTrangThai", maTrangThai);
+        model.addAttribute("selectedKho", maKho);
+        model.addAttribute("totalFiltered", filteredOrders.size());
+        model.addAttribute("totalAll", allOrders.size());
+
         return "admin/27-orders";
     }
 
     @GetMapping({"/admin/users", "/admin/19-users.html"})
-    public String adminUsers() {
+    public String adminUsers(Model model) {
+        model.addAttribute("danhSachKho", khoRepository.findAll());
         return "admin/19-users";
     }
 
     @GetMapping({"/admin/warehouses", "/admin/24-warehouses.html"})
-    public String adminWarehouses() {
+    public String adminWarehouses(Model model) {
+        log.info("Tải danh sách Kho/Bưu cục Admin từ cơ sở dữ liệu");
+        List<Kho> danhSachKho = khoRepository.findAll();
+        model.addAttribute("danhSachKho", danhSachKho);
         return "admin/24-warehouses";
     }
 
+    @PostMapping("/admin/warehouses/save")
+    public String saveWarehouse(
+            @RequestParam(required = false) String maKho,
+            @RequestParam String tenKho,
+            @RequestParam String diaChi,
+            @RequestParam(required = false) String sdt,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Kho kho;
+            if (maKho != null && !maKho.isBlank() && khoRepository.existsById(maKho.trim())) {
+                kho = khoRepository.findById(maKho.trim()).get();
+                kho.setTenKho(tenKho.trim());
+                kho.setDiaChi(diaChi.trim());
+                kho.setSdt(sdt != null ? sdt.trim() : null);
+                khoRepository.save(kho);
+                redirectAttributes.addFlashAttribute("successMessage", "Cập nhật bưu cục " + maKho + " thành công!");
+            } else {
+                String nextCode = (maKho != null && !maKho.isBlank()) ? maKho.trim() : null;
+                if (nextCode == null) {
+                    long count = khoRepository.count() + 1;
+                    nextCode = String.format("KHO%02d", count);
+                    while (khoRepository.existsById(nextCode)) {
+                        count++;
+                        nextCode = String.format("KHO%02d", count);
+                    }
+                }
+                kho = Kho.builder()
+                        .maKho(nextCode)
+                        .tenKho(tenKho.trim())
+                        .diaChi(diaChi.trim())
+                        .sdt(sdt != null ? sdt.trim() : null)
+                        .build();
+                khoRepository.save(kho);
+                redirectAttributes.addFlashAttribute("successMessage", "Thêm mới bưu cục " + nextCode + " thành công!");
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi lưu kho/bưu cục: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi lưu kho/bưu cục: " + e.getMessage());
+        }
+        return "redirect:/admin/warehouses";
+    }
+
     @GetMapping({"/admin/vehicles", "/admin/25-vehicles.html"})
-    public String adminVehicles() {
+    public String adminVehicles(Model model) {
+        log.info("Tải danh sách Phương tiện vận chuyển Admin từ cơ sở dữ liệu");
+        List<PhuongTien> danhSachPt = phuongTienRepository.findAll();
+        model.addAttribute("danhSachPhuongTien", danhSachPt);
         return "admin/25-vehicles";
     }
 
+    @PostMapping("/admin/vehicles/save")
+    public String saveVehicle(
+            @RequestParam(required = false) String maPt,
+            @RequestParam String bienSo,
+            @RequestParam String loaiXe,
+            @RequestParam BigDecimal taiTrong,
+            @RequestParam String trangThai,
+            RedirectAttributes redirectAttributes) {
+        try {
+            PhuongTien pt;
+            if (maPt != null && !maPt.isBlank() && phuongTienRepository.existsById(maPt.trim())) {
+                pt = phuongTienRepository.findById(maPt.trim()).get();
+                pt.setBienSo(bienSo.trim());
+                pt.setLoaiXe(loaiXe.trim());
+                pt.setTaiTrong(taiTrong);
+                pt.setTrangThai(trangThai.trim());
+                phuongTienRepository.save(pt);
+                redirectAttributes.addFlashAttribute("successMessage", "Cập nhật phương tiện " + maPt + " thành công!");
+            } else {
+                String nextCode = (maPt != null && !maPt.isBlank()) ? maPt.trim() : null;
+                if (nextCode == null) {
+                    long count = phuongTienRepository.count() + 1;
+                    nextCode = String.format("PT%03d", count);
+                    while (phuongTienRepository.existsById(nextCode)) {
+                        count++;
+                        nextCode = String.format("PT%03d", count);
+                    }
+                }
+                pt = new PhuongTien(nextCode, bienSo.trim(), loaiXe.trim(), taiTrong, trangThai.trim());
+                phuongTienRepository.save(pt);
+                redirectAttributes.addFlashAttribute("successMessage", "Thêm mới phương tiện " + nextCode + " thành công!");
+            }
+        } catch (Exception e) {
+            log.error("Lỗi khi lưu phương tiện: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Lỗi lưu phương tiện: " + e.getMessage());
+        }
+        return "redirect:/admin/vehicles";
+    }
+
     @GetMapping({"/admin/settings", "/admin/30-settings.html"})
-    public String adminSettings() {
+    public String adminSettings(Model model) {
+        model.addAttribute("tongKho", khoRepository.count());
+        model.addAttribute("tongDonHang", donHangRepository.count());
+        model.addAttribute("tongNguoiDung", nguoiDungRepository.count());
         return "admin/30-settings";
     }
 
@@ -607,7 +754,7 @@ public class ViewController implements WebMvcConfigurer {
         model.addAttribute("danhSachDonHang", danhSachDonHang);
         model.addAttribute("processedMaDh", processedMaDh);
 
-        return "admin/payments";
+        return "admin/28-payments";
     }
 
     @PostMapping("/admin/process-payment")
@@ -653,7 +800,7 @@ public class ViewController implements WebMvcConfigurer {
         model.addAttribute("slaReport", slaReport);
         model.addAttribute("tongKienLuuKho", tongKienLuuKho);
 
-        return "admin/reports";
+        return "admin/29-reports";
     }
 
     // =========================================================================

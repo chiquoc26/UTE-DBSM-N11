@@ -202,8 +202,21 @@ public class PostOfficeService {
         }
         donHangRepository.save(donHang);
 
-        // Đơn hàng thanh toán tiền mặt sẽ do tài xế thu trực tiếp khi phát hàng đến tay người nhận.
-        // Bưu cục tiếp nhận đơn và lập kiện, không thu và không cập nhật trạng thái cước phí tiền mặt tại bước này.
+        // Tự động cập nhật khoản cước vận chuyển tiền mặt sang Đã thanh toán (nhân viên thu tiền mặt khi tiếp nhận/lấy hàng)
+        List<ThanhToan> unpaidFees = thanhToanRepository.findByDonHang_MaDhOrderByThoiGianDesc(donHang.getMaDh())
+                .stream()
+                .filter(p -> "PHI_VC".equalsIgnoreCase(p.getLoaiKhoan())
+                        && !"DA_THANH_TOAN".equalsIgnoreCase(p.getTrangThai())
+                        && !"Đã thanh toán".equalsIgnoreCase(p.getTrangThai()))
+                .toList();
+        for (ThanhToan p : unpaidFees) {
+            p.setTrangThai("Đã thanh toán");
+            p.setThoiGian(LocalDateTime.now());
+            if (request.getMaNV() != null && !request.getMaNV().isBlank()) {
+                p.setNguoiThanhToan("NV " + request.getMaNV() + " (thu tiền mặt khi lấy hàng)");
+            }
+            thanhToanRepository.save(p);
+        }
 
         // Ghi nhận lịch sử trạng thái
         String maLs = "LS" + String.format("%08d", (int) (System.currentTimeMillis() % 100000000));

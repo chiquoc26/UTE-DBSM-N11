@@ -6,6 +6,7 @@
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
+        modal.style.display = 'flex';
         modal.classList.add('show');
         document.body.style.overflow = 'hidden';
     }
@@ -15,6 +16,7 @@ function closeModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.remove('show');
+        modal.style.display = 'none';
         document.body.style.overflow = '';
     }
 }
@@ -23,6 +25,7 @@ function closeModal(modalId) {
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('modal-backdrop')) {
         e.target.classList.remove('show');
+        e.target.style.display = 'none';
         document.body.style.overflow = '';
     }
 });
