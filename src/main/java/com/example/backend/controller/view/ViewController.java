@@ -473,18 +473,6 @@ public class ViewController implements WebMvcConfigurer {
         String finalMaKho = (maKho != null && !maKho.isBlank()) ? maKho : (currentNv != null && currentNv.getMaKho() != null ? currentNv.getMaKho() : "KHO01");
 
         try {
-            // Kiểm tra trạng thái cước: Chỉ tiếp nhận đơn khi đã được thanh toán cước
-            List<ThanhToan> payments = thanhToanRepository.findByDonHang_MaDhOrderByThoiGianDesc(maDh);
-            boolean phiDaThanhToan = payments.stream()
-                    .filter(p -> "PHI_VC".equalsIgnoreCase(p.getLoaiKhoan()))
-                    .anyMatch(p -> "Đã thanh toán".equalsIgnoreCase(p.getTrangThai())
-                            || "DA_THANH_TOAN".equalsIgnoreCase(p.getTrangThai()));
-            if (!phiDaThanhToan) {
-                redirectAttributes.addFlashAttribute("errorMessage", "Đơn hàng " + maDh + " chưa thanh toán cước phí! Vui lòng thanh toán cước trước khi tiếp nhận.");
-                redirectAttributes.addAttribute("maKho", finalMaKho);
-                return "redirect:/post-office/dashboard";
-            }
-
             ReceiveOrderRequest req = ReceiveOrderRequest.builder()
                     .maKho(finalMaKho)
                     .maNV(currentMaNv)

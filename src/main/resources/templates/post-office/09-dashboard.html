@@ -172,14 +172,11 @@
                                               th:text="${order.tinhTrangThanhToan}">Đã thanh toán</span>
                                     </td>
                                     <td>
-                                        <button th:if="${order.phiDaThanhToan}" type="button" class="btn btn-primary btn-sm" 
-                                                th:attr="data-madh=${order.maDh},data-phi=${order.phiVanChuyen != null ? order.phiVanChuyen : 0},data-khoiluong=${order.khoiLuong},data-dai=${order.dai},data-rong=${order.rong},data-cao=${order.cao},data-loaihang=${order.loaiHang}"
-                                                onclick="moHopThoaiTiepNhan(this.getAttribute('data-madh'), this.getAttribute('data-phi'), this.getAttribute('data-khoiluong'), this.getAttribute('data-dai'), this.getAttribute('data-rong'), this.getAttribute('data-cao'), this.getAttribute('data-loaihang'))">
+                                        <button type="button" class="btn btn-primary btn-sm" 
+                                                th:attr="data-madh=${order.maDh},data-phi=${order.phiVanChuyen != null ? order.phiVanChuyen : 0},data-khoiluong=${order.khoiLuong},data-dai=${order.dai},data-rong=${order.rong},data-cao=${order.cao},data-loaihang=${order.loaiHang},data-phidathanhtoan=${order.phiDaThanhToan},data-tinhtrang=${order.tinhTrangThanhToan}"
+                                                onclick="moHopThoaiTiepNhan(this.getAttribute('data-madh'), this.getAttribute('data-phi'), this.getAttribute('data-khoiluong'), this.getAttribute('data-dai'), this.getAttribute('data-rong'), this.getAttribute('data-cao'), this.getAttribute('data-loaihang'), this.getAttribute('data-phidathanhtoan'), this.getAttribute('data-tinhtrang'))">
                                             Tiếp nhận đơn
                                         </button>
-                                        <span th:if="${!order.phiDaThanhToan}" class="badge" style="background: var(--bg-alt); color: var(--text-muted); font-size: 11.5px; border: 1px solid var(--border-color); padding: 5px 8px;">
-                                            Chờ thanh toán cước
-                                        </span>
                                     </td>
                                 </tr>
                             </tbody>
@@ -203,6 +200,13 @@
             <form th:action="@{/post-office/receive-order}" method="post">
                 <div class="modal-body" style="padding: 20px;">
                     <input type="hidden" name="maKho" th:value="${selectedMaKho}">
+                    <div id="modalFeeNotice" style="margin-bottom: 16px; padding: 12px 16px; background: var(--bg-alt); border-radius: var(--radius-md); border-left: 4px solid var(--primary); font-size: 13.5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Cước vận chuyển:</span>
+                            <strong id="modalPhiDisplay" style="color: var(--primary); font-size: 15px;">0 đ</strong>
+                        </div>
+                        <div style="margin-top: 6px; font-size: 12.5px;" id="modalPaymentNotice">Trạng thái: Đang kiểm tra...</div>
+                    </div>
                     <div class="form-group">
                         <label class="form-label">Mã đơn hàng tiếp nhận <span class="required">*</span></label>
                         <input type="text" class="form-control" name="maDh" id="modalMaDh" readonly required>
@@ -284,12 +288,28 @@
             totalItems: ssrPendingTotal
         });
 
-        function moHopThoaiTiepNhan(maDh, phi, khoiLuong, dai, rong, cao, loaiHang) {
+        function moHopThoaiTiepNhan(maDh, phi, khoiLuong, dai, rong, cao, loaiHang, phiDaThanhToan, tinhTrang) {
             document.getElementById('modalMaDh').value = maDh;
             document.getElementById('modalKhoiLuong').value = (khoiLuong !== null && khoiLuong !== undefined && khoiLuong !== '') ? parseFloat(khoiLuong) : '1.5';
             document.getElementById('modalDai').value = (dai !== null && dai !== undefined && dai !== '') ? parseFloat(dai) : '20';
             document.getElementById('modalRong').value = (rong !== null && rong !== undefined && rong !== '') ? parseFloat(rong) : '15';
             document.getElementById('modalCao').value = (cao !== null && cao !== undefined && cao !== '') ? parseFloat(cao) : '10';
+            
+            var phiNum = (phi !== null && phi !== undefined && phi !== '') ? parseFloat(phi) : 0;
+            var formattedPhi = new Intl.NumberFormat('vi-VN').format(phiNum) + ' đ';
+            var phiDisplayEl = document.getElementById('modalPhiDisplay');
+            if (phiDisplayEl) phiDisplayEl.innerText = formattedPhi;
+            
+            var noticeEl = document.getElementById('modalPaymentNotice');
+            if (noticeEl) {
+                var isPaid = (phiDaThanhToan === 'true' || phiDaThanhToan === true);
+                if (isPaid) {
+                    noticeEl.innerHTML = '<span style="color: var(--success); font-weight: 600;">✓ Đã thanh toán cước trước qua chuyển khoản</span>';
+                } else {
+                    noticeEl.innerHTML = '<span style="color: #2563eb; font-weight: 600;">ℹ Thanh toán tiền mặt: Tài xế giao nhận sẽ thu ' + formattedPhi + ' trực tiếp khi phát hàng đến tay người nhận</span>';
+                }
+            }
+
             if (loaiHang) {
                 var sel = document.getElementById('modalLoaiHang');
                 var found = false;
